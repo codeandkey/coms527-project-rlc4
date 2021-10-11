@@ -4,18 +4,40 @@
 
 #include <iostream>
 
+#include "environment.h"
+#include "environment_c4.h"
+
 using namespace std;
 
 int main(int argc, char** argv) {
-    cout << torch::cuda::device_count() << " CUDA devices available" << endl;
+    Environment* env = new C4Environment();
 
-    #pragma omp parallel
-    {
-        #pragma omp critical
-        {
-            cout << "Hello from " << omp_get_thread_num() << " of " << omp_get_num_threads() << "!" << endl;
+    cout << "Environment type " << env->getName() << endl;
+
+    float tval;
+
+    while (!env->terminal(&tval)) {
+        cout << env->getString();
+
+        cout << "Next action > ";
+        int next;
+        cin >> next;
+
+        int* mask = new int[env->policySize()];
+        env->legalMask(mask);
+
+        if (!mask[next]) {
+            cout << "Illegal action\n";
+            delete[] mask;
+            continue;
         }
+
+        delete[] mask;
+
+        env->push(next);
     }
+
+    cout << "Terminal state reached, value " << tval << endl;
 
     return 0;
 }

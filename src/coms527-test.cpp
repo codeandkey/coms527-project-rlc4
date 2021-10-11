@@ -6,6 +6,8 @@
 
 #include <gtest/gtest.h>
 
+#include "environment.h"
+
 TEST(TestSuiteTest, CanTest) {
     EXPECT_EQ(0, 0);
 }
