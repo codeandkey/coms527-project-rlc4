@@ -1,11 +1,14 @@
 #include <mpi.h>
 #include <omp.h>
+#include <torch/torch.h>
 
 #include <iostream>
 
 using namespace std;
 
 int main(int argc, char** argv) {
+    cout << torch::cuda::device_count() << " CUDA devices available" << endl;
+
     #pragma omp parallel
     {
         #pragma omp critical
