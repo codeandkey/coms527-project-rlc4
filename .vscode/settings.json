@@ -1,4 +1,6 @@
 {
-    "cmake.buildArgs": ["-DCMAKE_PREFIX_PATH=C:\\Users\\metre\\libtorch"],
-    "cmake.configureArgs": ["-DCMAKE_PREFIX_PATH=C:\\Users\\metre\\libtorch"]
+    "cmake.configureArgs": [
+        "-DCMAKE_PREFIX_PATH=C:\\Users\\metre\\libtorch",
+        "-DCMAKE_CXX_FLAGS=\"-IC:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\""
+    ]
 }
