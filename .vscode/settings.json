@@ -1,0 +1,4 @@
+{
+    "cmake.buildArgs": ["-DCMAKE_PREFIX_PATH=C:\\Users\\metre\\libtorch"],
+    "cmake.configureArgs": ["-DCMAKE_PREFIX_PATH=C:\\Users\\metre\\libtorch"]
+}
