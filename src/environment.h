@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 /**
  * Generic environment class. This exposes an environment in which an agent can observe
@@ -47,7 +48,7 @@ class Environment {
          * 
          * @param dst [out] Destination mask.
          */
-        virtual void legalMask(int* dst) = 0;
+        virtual void legalMask(float* dst) = 0;
 
         /**
          * Performs an action in the environment. The action must be a legal action
@@ -77,4 +78,11 @@ class Environment {
          * @param layer [out] Destination input layer.
          */
         virtual void input(float* layer) = 0;
+
+        /**
+         * Shorthand for getting a list of legal actions without iterating the mask.
+         * 
+         * @return Vector of legal actions
+         */
+        std::vector<int> getLegalActions();
 };

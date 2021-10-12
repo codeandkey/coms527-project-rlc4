@@ -39,9 +39,9 @@ void C4Environment::getDimensions(int* width, int* height, int* features) {
     *features = 2;
 }
 
-void C4Environment::legalMask(int* dst) {
+void C4Environment::legalMask(float* dst) {
     for (int x = 0; x < 7; ++x) {
-        dst[x] = (cells[7 * 5 + x] == 0);
+        dst[x] = (cells[7 * 5 + x] == 0) ? 1.0f : 0.0f;
     }
 }
 

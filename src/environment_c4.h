@@ -5,6 +5,9 @@
 
 class C4Environment : public Environment {
     public:
+        /**
+         * Initializes a new connect-4 environment.
+         */
         C4Environment();
 
         // Inherited methods, implemented in environment_c4.cpp
@@ -12,7 +15,7 @@ class C4Environment : public Environment {
         std::string getString();
         int policySize();
         void getDimensions(int* width, int* height, int* features);
-        void legalMask(int* dst);
+        void legalMask(float* dst);
         void push(int ind);
         void pop();
         bool terminal(float* value);

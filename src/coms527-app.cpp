@@ -19,14 +19,14 @@ int main(int argc, char** argv) {
     while (!env->terminal(&tval)) {
         cout << env->getString();
 
-        cout << "Next action > ";
         int next;
+        cout << "Next action > ";
         cin >> next;
 
-        int* mask = new int[env->policySize()];
+        float* mask = new float[env->policySize()];
         env->legalMask(mask);
 
-        if (!mask[next]) {
+        if (fabs(mask[next]) < 0.01f) {
             cout << "Illegal action\n";
             delete[] mask;
             continue;
