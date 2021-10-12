@@ -60,7 +60,7 @@ For the class project I would like to train a neural network to play the game Co
 \noindent\textbf{Goals}
 \begin{itemize}
     \item Final model should consistently win against random moves
-    \item Model training speed should scale with node count (or GPU count)
+    \item Model training/inference speed should scale with GPU count across nodes
     \item Model skill progression should be measurable
 \end{itemize}
 
@@ -68,18 +68,19 @@ For the class project I would like to train a neural network to play the game Co
 
 \noindent\textbf{Limitations}
 \begin{itemize}
-    \item Non-GPU nodes may not be able to contribute much to the training process
+    \item Each node must have at least one GPU to contribute
 \end{itemize}
 
 \section{Implementation}
 
 \subsection{Libraries}
 
-The project will be written in C++, using OpenMP for threading and MPI for message passing. Torch will be used for neural network training and inference. The source code will be documented with inline Doxygen.
+The project will be written in C++, using MPI for concurrency with distributed memory. Torch will be used for neural network training and inference. The source code will be documented using Doxygen.
 
 \subsection{Architecture}
 
-The agent will use a directed Monte-Carlo tree search to make decisions. The search will be led by policy and value outputs from the neural network. Training data will be built in parallel across all nodes, however once the training data is ready the training step can take place on a single node. 
+The agent will use a directed Monte-Carlo tree search to make decisions. The search will be led by policy and value outputs from the neural network. Training data will be built in parallel across all nodes, however once the training data is ready the training step can take place on a single node.
+Each node will have access to an archive of past games played. Every GPU will play 32 games simultaneously to contribute to the experience buffer.
 
 \subsection{Evaluation}
 
