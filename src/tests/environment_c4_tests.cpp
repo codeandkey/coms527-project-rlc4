@@ -43,3 +43,13 @@ TEST(C4EnvironmentTest, InitialLegalMask) {
         EXPECT_EQ(expected[i], actual[i]) << "expected, result differ at index " << i;
     }
 }
+
+TEST(C4EnvironmentTest, InitialGetLegalMoves) {
+    Environment* env = new C4Environment();
+    vector<int> expected = {0, 1, 2, 3, 4, 5, 6};
+    vector<int> actual = env->getLegalActions();
+
+    for (int i = 0; i < 7; ++i) {
+        EXPECT_EQ(expected[i], actual[i]) << "expected, result differ at index " << i;
+    }
+}
