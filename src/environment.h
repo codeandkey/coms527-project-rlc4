@@ -85,4 +85,14 @@ class Environment {
          * @return Vector of legal actions
          */
         std::vector<int> getLegalActions();
+
+        /**
+         * Initializes an environment by name.
+         * 
+         * Available environments:
+         *     Connect4
+         * 
+         * @param name Name of Environment to initialize
+         */
+        static Environment* initFromName(std::string name);
 };

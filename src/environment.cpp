@@ -1,6 +1,9 @@
+#include "environment_c4.h"
 #include "environment.h"
 
 using namespace std;
+
+#include <stdexcept>
 
 vector<int> Environment::getLegalActions() {
     vector<int> output;
@@ -15,4 +18,12 @@ vector<int> Environment::getLegalActions() {
 
     delete[] mask;
     return output;
+}
+
+Environment* Environment::initFromName(string name) {
+    if (name == "Connect4") {
+        return new C4Environment();
+    }
+
+    throw std::runtime_error("Unknown environment type " + name);
 }
