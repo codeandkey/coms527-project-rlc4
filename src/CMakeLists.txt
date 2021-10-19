@@ -1,8 +1,18 @@
 # If FindPackage(Torch) is not available, make sure Torch is installed on the host system.
 # Adding the build flag `-DCMAKE_PREFIX_PATH=/path/to/libtorch/install` should resolve the problem.
+
+set(PRIMARY_SOURCES
+  environment.cpp
+  environment_c4.cpp
+  mcts.cpp
+)
  
-add_executable(coms527-app coms527-app.cpp environment_c4.cpp)
-target_link_libraries(coms527-app "${TORCH_LIBRARIES}")
+add_executable(coms527-app
+  coms527-app.cpp
+  ${PRIMARY_SOURCES}
+)
+
+target_link_libraries(coms527-app "${TORCH_LIBRARIES}" "${MPI_CXX_LIBRARIES}")
 set_property(TARGET coms527-app PROPERTY CXX_STANDARD 14)
 
 if (MSVC)
@@ -28,9 +38,9 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(coms527-test
   coms527-test.cpp
-  environment.cpp
-  environment_c4.cpp
   tests/environment_c4_tests.cpp
+  tests/mcts_tests.cpp
+  ${PRIMARY_SOURCES}
 )
 
 target_link_libraries(coms527-test gtest_main)
