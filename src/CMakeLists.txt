@@ -2,6 +2,7 @@
 # Adding the build flag `-DCMAKE_PREFIX_PATH=/path/to/libtorch/install` should resolve the problem.
 
 set(PRIMARY_SOURCES
+  comm.cpp
   environment.cpp
   environment_c4.cpp
   mcts.cpp
@@ -43,7 +44,11 @@ add_executable(coms527-test
   ${PRIMARY_SOURCES}
 )
 
-target_link_libraries(coms527-test gtest_main)
+target_link_libraries(coms527-test
+    "${MPI_CXX_LIBRARIES}"
+    "${TORCH_LIBRARIES}"
+    gtest_main
+)
 
 include(GoogleTest)
 gtest_discover_tests(coms527-test)
