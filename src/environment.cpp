@@ -3,6 +3,7 @@
 
 using namespace std;
 
+#include <cmath>
 #include <stdexcept>
 
 vector<int> Environment::getLegalActions() {
