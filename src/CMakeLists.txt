@@ -2,9 +2,10 @@
 # Adding the build flag `-DCMAKE_PREFIX_PATH=/path/to/libtorch/install` should resolve the problem.
 
 set(PRIMARY_SOURCES
+  actor.cpp
   comm.cpp
   environment.cpp
-  environment_c4.cpp
+  connect4.cpp
   mcts.cpp
 )
  
@@ -39,7 +40,7 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(coms527-test
   coms527-test.cpp
-  tests/environment_c4_tests.cpp
+  tests/connect4_tests.cpp
   tests/mcts_tests.cpp
   ${PRIMARY_SOURCES}
 )

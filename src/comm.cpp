@@ -1,6 +1,8 @@
 #include "comm.h"
+#include "params.h"
 
 #include <iostream>
+#include <random>
 #include <vector>
 
 #include <mpi.h>
@@ -24,12 +26,22 @@ void cluster::init(int* argc, char*** argv) {
     // Query CUDA status
     int gpu_enabled = torch::cuda::is_available();
 
+    for (int i = 0; i < *argc; ++i) {
+        if (string((*argv)[i]) == "--cpu_only") {
+            gpu_enabled = true;
+
+            if (!our_rank) {
+                cerr << "Treating all nodes as accelerated" << endl;
+            }
+        }
+    }
+
     // Collect CUDA status of all nodes
     int* gpu_status = new int[nprocs];
 
     MPI_Allgather(&gpu_enabled, 1, MPI_INT, gpu_status, 1, MPI_INT, MPI_COMM_WORLD);
 
-    node_cuda_support.empty();
+    node_cuda_support.clear();
 
     for (int i = 0; i < nprocs; ++i) {
         if (gpu_status[i]) {
@@ -84,4 +96,37 @@ void cluster::abort(string msg) {
 
 cluster::Identity cluster::identity() {
     return node_identity[our_rank];
+}
+
+int cluster::request_inference(float* batch, char* tags) {
+    // Choose target inference node
+    static vector<int> inference_nodes;
+
+    if (!inference_nodes.size()) {
+        for (auto& k : node_identity) {
+            if (k.second == INFERENCE) {
+                inference_nodes.push_back(k.first);
+            }
+        }
+    }
+
+    // Select a node by random
+    // TODO: probably a better way to load-balance, but statistically this
+    // should be reasonable if all nodes have the same compute capability
+    
+    default_random_engine dev;
+    uniform_int_distribution<int> dist(0, inference_nodes.size() - 1);
+    
+    int node = inference_nodes[dist(dev)];
+
+    // Build message header
+
+    int header[2];
+
+    header[0] = MSG_REQUEST_INFERENCE;
+    header[1] = our_rank;
+
+    MPI_Send(header, 2, MPI_INT, node, 0, 0, MPI_COMM_WORLD);
+
+    return node;
 }

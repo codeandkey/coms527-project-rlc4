@@ -6,6 +6,14 @@
 
 // =========== config ===========
 #define MODEL_PATH "models/model.pt"
+#define TAG_SIZE 32
+
+// ===========  Environment     ===========
+#define SELECTED_ENV Connect4
+#define WIDTH SELECTED_ENV::width
+#define HEIGHT SELECTED_ENV::height
+#define FEATURES SELECTED_ENV::features
+#define PSIZE SELECTED_ENV::policy_size
 
 // ===========  MCTS parameters ===========
 
@@ -17,3 +25,7 @@
 
 #define ENVS_PER_ACTOR  32 // Number of parallel simulations per actor node
 #define INFERENCE_BSIZE 32 // Inference batchsize
+
+// ===========  Message types  ============
+
+#define MSG_REQUEST_INFERENCE 0

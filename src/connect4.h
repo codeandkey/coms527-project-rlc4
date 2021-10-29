@@ -3,12 +3,12 @@
 #include <string>
 #include <vector>
 
-class C4Environment : public Environment {
+class Connect4 : public Environment {
     public:
         /**
          * Initializes a new connect-4 environment.
          */
-        C4Environment();
+        Connect4();
 
         // Inherited methods, implemented in environment_c4.cpp
         const char* getName();
@@ -20,6 +20,11 @@ class C4Environment : public Environment {
         void pop();
         bool terminal(float* value);
         void input(float* layer);
+
+        static const int width = 7;
+        static const int height = 6;
+        static const int policy_size = 7;
+        static const int features = 2;
 
     private:
         int cells[42], turn;

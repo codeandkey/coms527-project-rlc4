@@ -49,4 +49,12 @@ namespace cluster {
      * @return Calling node identity
      */
     Identity identity();
+
+    /**
+     * Writes an input batch to an inference node. Returns the ID of the node
+     * it is sent to. Used by actor nodes.
+     *
+     * @return Selected inference node
+     */
+    int request_inference(float* batch, char* tags);
 }

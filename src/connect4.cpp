@@ -2,7 +2,7 @@
 
 using namespace std;
 
-C4Environment::C4Environment() {
+Connect4::Connect4() {
     turn = 1;
 
     for(int i = 0; i < sizeof cells / sizeof cells[0]; ++i) {
@@ -10,11 +10,11 @@ C4Environment::C4Environment() {
     }
 }
 
-const char* C4Environment::getName() {
+const char* Connect4::getName() {
     return "Connect4";
 }
 
-string C4Environment::getString() {
+string Connect4::getString() {
     string output = "O.X"[turn + 1] + string(" to move\n");
 
     for (int y = 5; y >= 0; --y) {
@@ -29,23 +29,23 @@ string C4Environment::getString() {
     return output;
 }
 
-int C4Environment::policySize() {
+int Connect4::policySize() {
     return 7;
 }
 
-void C4Environment::getDimensions(int* width, int* height, int* features) {
+void Connect4::getDimensions(int* width, int* height, int* features) {
     *width = 7;
     *height = 6;
     *features = 2;
 }
 
-void C4Environment::legalMask(float* dst) {
+void Connect4::legalMask(float* dst) {
     for (int x = 0; x < 7; ++x) {
         dst[x] = (cells[7 * 5 + x] == 0) ? 1.0f : 0.0f;
     }
 }
 
-void C4Environment::push(int ind) {
+void Connect4::push(int ind) {
     for (int y = 0; y < 6; ++y) {
         int dst = y * 7 + ind;
         if (!cells[dst]) {
@@ -57,7 +57,7 @@ void C4Environment::push(int ind) {
     }
 }
 
-void C4Environment::pop() {
+void Connect4::pop() {
     int last = history.back();
     history.pop_back();
 
@@ -71,7 +71,7 @@ void C4Environment::pop() {
     }
 }
 
-bool C4Environment::terminal(float* value) {
+bool Connect4::terminal(float* value) {
     // Check to see if the game is over. If there is a C-4 on the board then
     // the player to move must have lost.
 
@@ -169,7 +169,7 @@ bool C4Environment::terminal(float* value) {
     return draw;
 }
 
-void C4Environment::input(float* layer) {
+void Connect4::input(float* layer) {
     for (int x = 0; x < 7; ++x) {
         for (int y = 0; y < 6; ++y) {
             int val = cells[y * 7 + x];

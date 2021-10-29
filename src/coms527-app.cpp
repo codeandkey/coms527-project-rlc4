@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 
+#include "actor.h"
 #include "comm.h"
 
 using namespace std;
@@ -9,7 +10,7 @@ using namespace std;
 int main(int argc, char** argv) {
     cluster::init(&argc, &argv);
 
-    int retcode = -1;
+    int retcode = 0;
 
     try {
         switch (cluster::identity()) {
@@ -20,7 +21,7 @@ int main(int argc, char** argv) {
                 // retcode = inference::start();
                 break;
             case cluster::ACTOR:
-                // retcode = actor::start();
+                retcode = actor::run();
                 break;
         }
     } catch (std::exception& e) {
@@ -28,7 +29,7 @@ int main(int argc, char** argv) {
     }
 
     if (retcode) {
-        cluster::abort(string("nodetask returned errorcode ") + retcode);
+        cluster::abort(string("nodetask returned errorcode ") + to_string(retcode));
     }
 
     cluster::destroy();

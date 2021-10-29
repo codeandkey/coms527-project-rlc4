@@ -1,26 +1,21 @@
 #include "../mcts.h"
-#include "../environment_c4.h"
+#include "../connect4.h"
 
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <string>
 #include <vector>
 
 using namespace std;
 
 TEST(MCTSTest, TreeCanInit) {
-    Environment* env = new C4Environment();
-    Tree t(env);
-    delete env;
+    Tree t;
 }
 
 TEST(MCTSTest, TreeCanSimulate) {
-    Environment* env = new C4Environment();
-    Tree* t = new Tree(env);
+    Tree t;
 
-    EXPECT_NE(t->simulate(), nullptr);
-    EXPECT_THROW(t->simulate(), std::runtime_error);
-
-    delete t;
-    delete env;
+    EXPECT_NE(t.simulate(), nullptr);
+    EXPECT_THROW(t.simulate(), std::runtime_error);
 }

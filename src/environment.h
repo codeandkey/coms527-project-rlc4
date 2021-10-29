@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -22,29 +23,8 @@ class Environment {
         virtual std::string getString() = 0;
 
         /**
-         * Returns the size of the policy array. This is effectively the number
-         * of possible decisions which can be made at any time. This method should
-         * ALWAYS return a constant value.
-         * 
-         * @return Policy length
-         */
-        virtual int policySize() = 0;
-
-        /**
-         * Queries the dimensions of the environment. This is important for generating
-         * network architecture; this should be constant per environment.
-         * 
-         * @param width [out] Width of the playing area
-         * @param height [out] Height of the playing area
-         * @param features [out] Input features per cell
-         */
-        virtual void getDimensions(int* width, int* height, int* features) = 0;
-
-        /**
          * Loads a mask of legal actions into <dst>. This method should write '1'
          * into indices of legal actions, and '0' into indices of illegal actions.
-         * 
-         * 'dst' is expected to be of exactly 'policySize()' length.
          * 
          * @param dst [out] Destination mask.
          */
@@ -85,14 +65,4 @@ class Environment {
          * @return Vector of legal actions
          */
         std::vector<int> getLegalActions();
-
-        /**
-         * Initializes an environment by name.
-         * 
-         * Available environments:
-         *     Connect4
-         * 
-         * @param name Name of Environment to initialize
-         */
-        static Environment* initFromName(std::string name);
 };
