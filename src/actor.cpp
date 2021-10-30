@@ -14,7 +14,7 @@ using namespace std;
 int actor::run()
 {
     // Initialize environment trees
-    vector<Tree> environments(ENVS_PER_ACTOR);
+    vector<Tree> trees(ENVS_PER_ACTOR);
 
     // Initialize environment tags
     default_random_engine dev;
@@ -43,7 +43,6 @@ int actor::run()
 
                 // Send tagged trajectory to training thread
             }
-            environments[i]->input(&batch[WIDTH * HEIGHT * FEATURES * i]);
         }
     }
 

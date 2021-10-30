@@ -1,3 +1,4 @@
+#include "connect4.h"
 #include "comm.h"
 #include "params.h"
 
@@ -126,7 +127,13 @@ int cluster::request_inference(float* batch, char* tags) {
     header[0] = MSG_REQUEST_INFERENCE;
     header[1] = our_rank;
 
-    MPI_Send(header, 2, MPI_INT, node, 0, 0, MPI_COMM_WORLD);
+    MPI_Send(header, 2, MPI_INT, node, 0, MPI_COMM_WORLD);
+
+    // Send observation data
+    MPI_Send(batch, WIDTH * HEIGHT * FEATURES * ENVS_PER_ACTOR, MPI_FLOAT, node, 0, MPI_COMM_WORLD);
+
+    // Send tag data
+    MPI_Send(tags, TAG_SIZE * ENVS_PER_ACTOR, MPI_CHAR, node, 0, MPI_COMM_WORLD);
 
     return node;
 }

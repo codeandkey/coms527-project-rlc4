@@ -1,3 +1,4 @@
+#include "connect4.h"
 #include "mcts.h"
 #include "params.h"
 
@@ -86,9 +87,11 @@ shared_ptr<Environment> Tree::simulate() {
     if (env->terminal(&tval)) {
         current->backprop(tval);
 
+        Node* cur = current.get();
+
         while(current != root) {
             env->pop();
-            current = current->parent;
+            cur = cur->parent;
         }
 
         return simulate();

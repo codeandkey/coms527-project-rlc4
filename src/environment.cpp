@@ -1,3 +1,4 @@
+#include "connect4.h"
 #include "environment.h"
 #include "params.h"
 
@@ -8,10 +9,9 @@ using namespace std;
 
 vector<int> Environment::getLegalActions() {
     vector<int> output;
-    int psize = policySize();
-    int* mask = new int[psize];
+    int* mask = new int[PSIZE];
 
-    for (int i = 0; i < psize; ++i) {
+    for (int i = 0; i < PSIZE; ++i) {
         if (fabs(mask[i]) > 0.5f) {
             output.push_back(i);
         }

@@ -18,7 +18,7 @@ struct Node {
     float p = 0.0f;         // Node prior probability.
     int action = -1;        // Action that led to this node (preceding edge label).
     int depth = 0;          // Depth of the subtree under this node.
-    std::shared_ptr<Node> parent = nullptr; // Pointer to parent, if there is one.
+    Node* parent = nullptr; // Pointer to parent, if there is one.
     std::vector<std::shared_ptr<Node>> children; // List of child nodes.
 
     /**
@@ -97,6 +97,6 @@ class Tree {
          */
         void advance(int action);
     private:
-        std::unique_ptr<Environment> env;
+        std::shared_ptr<Environment> env;
         std::shared_ptr<Node> root, target;
 };
