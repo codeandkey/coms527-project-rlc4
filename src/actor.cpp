@@ -34,14 +34,19 @@ int actor::run()
 
         // Build observation buffer
         for (int i = 0; i < ENVS_PER_ACTOR; ++i) {
-            shared_ptr<Environment> result = trees[i].simulate();
+            Environment* result = trees[i].simulate();
 
-            if (result == nullptr) {
+            if (!result) {
+                float final_observation[WIDTH * HEIGHT * FEATURES];
+
+
+
                 // Target n reached. Make a decision and advance the environment
                 int action = trees[i].chooseAction();
                 trees[i].advance(action);
 
                 // Send tagged trajectory to training thread
+                cluster::complete_trajectory(result
             }
         }
     }

@@ -2,6 +2,11 @@
 
 using namespace std;
 
+const int Connect4::width = 7;
+const int Connect4::height = 7;
+const int Connect4::policy_size = 7;
+const int Connect4::features = 2;
+
 Connect4::Connect4() {
     turn = 1;
 

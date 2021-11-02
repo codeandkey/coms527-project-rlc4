@@ -32,7 +32,7 @@ void Node::expand(vector<int> actions, float* policy, float value) {
     children.reserve(actions.size());
 
     for (auto& a : actions) {
-        shared_ptr<Node> child = make_shared<Node>();
+        Node* child = new Node();
 
         child->parent = this;
         child->action = a;
@@ -45,11 +45,15 @@ void Node::expand(vector<int> actions, float* policy, float value) {
 }
 
 Tree::Tree() {
-    env = make_shared<SELECTED_ENV>();
-    root = make_shared<Node>();
+    env = new SELECTED_ENV();
+    root = new Node();
 }
 
-shared_ptr<Environment> Tree::simulate() {
+Tree::~Tree() {
+    delete env;
+}
+
+Environment* Tree::simulate() {
     if (target) {
         throw std::runtime_error("Tree::select() called in waiting mode");
     }
@@ -58,13 +62,13 @@ shared_ptr<Environment> Tree::simulate() {
         return nullptr;
     }
 
-    shared_ptr<Node> current = root;
+    Node* current = root;
 
     while (!current->children.empty()) {
         // Maximize PUCT
 
         float max_puct = std::numeric_limits<float>::min();
-        shared_ptr<Node> selecting;
+        Node* selecting;
 
         for (auto& c : current->children) {
             float val = -c->valueAverage();
@@ -87,11 +91,9 @@ shared_ptr<Environment> Tree::simulate() {
     if (env->terminal(&tval)) {
         current->backprop(tval);
 
-        Node* cur = current.get();
-
         while(current != root) {
             env->pop();
-            cur = cur->parent;
+            current = current->parent;
         }
 
         return simulate();

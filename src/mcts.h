@@ -4,7 +4,6 @@
  * MCTS implementation
  */
 
-#include <memory>
 #include <vector>
 
 #include "environment.h"
@@ -19,7 +18,7 @@ struct Node {
     int action = -1;        // Action that led to this node (preceding edge label).
     int depth = 0;          // Depth of the subtree under this node.
     Node* parent = nullptr; // Pointer to parent, if there is one.
-    std::vector<std::shared_ptr<Node>> children; // List of child nodes.
+    std::vector<Node*> children; // List of child nodes.
 
     /**
      * Backpropagates a value up the tree.
@@ -53,12 +52,17 @@ class Tree {
         Tree();
 
         /**
+         * Cleans up a search tree and associated environment.
+         */
+        ~Tree();
+
+        /**
          * Runs the next MCTS simulation. If a terminal is reached it is backpropagated immediately,
          * and the next simulation is returned. Returns NULL when no more selections are needed.
          * 
          * @return Next environment to expand, or NULL if node target reached.
          */
-        std::shared_ptr<Environment> simulate();
+        Environment* simulate();
 
         /**
          * Returns the probability vector over next actions.
@@ -97,6 +101,6 @@ class Tree {
          */
         void advance(int action);
     private:
-        std::shared_ptr<Environment> env;
-        std::shared_ptr<Node> root, target;
+        Environment* env;
+        Node* root, *target;
 };

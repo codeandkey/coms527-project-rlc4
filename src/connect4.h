@@ -21,10 +21,10 @@ class Connect4 : public Environment {
         bool terminal(float* value);
         void input(float* layer);
 
-        static const int width = 7;
-        static const int height = 6;
-        static const int policy_size = 7;
-        static const int features = 2;
+        static const int width;
+        static const int height;
+        static const int policy_size;
+        static const int features;
 
     private:
         int cells[42], turn;
