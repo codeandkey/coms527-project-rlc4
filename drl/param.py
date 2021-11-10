@@ -13,3 +13,4 @@ PSIZE = SELECTED_ENV.psize
 # Config parameters
 
 MODEL_PATH = 'model.pt'
+TARGET_NODES = 128
