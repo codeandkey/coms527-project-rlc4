@@ -9,3 +9,7 @@ WIDTH = SELECTED_ENV.width
 HEIGHT = SELECTED_ENV.height
 FEATURES = SELECTED_ENV.features
 PSIZE = SELECTED_ENV.psize
+
+# Config parameters
+
+MODEL_PATH = 'model.pt'
