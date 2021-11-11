@@ -1,17 +1,19 @@
 # Inference node type
 
-import cluster
-import model
-import param
+from . import cluster
+from . import model
+from . import param
+from . import util
 
 import numpy as np
 
 def start():
-    # Wait for first model reload from trainer
-    rbuf = np.empty((2,), dtype=np.int32)
-    cluster.comm.recv(rbuf, cluster.trainer)
+    util.log('Starting inference task.')
 
-    if rbuf[0] != cluster.trainer or rbuf[1] != param.MSG_RELOAD:
+    # Wait for first model reload from trainer
+    sender, mtype = cluster.comm.recv(source=cluster.trainer)
+
+    if sender != cluster.trainer or mtype != param.MSG_RELOAD:
         raise RuntimeError('Invalid initial message')
 
     # Load model
@@ -19,10 +21,7 @@ def start():
 
     # Wait for observations / reloads
     while True:
-        cluster.comm.recv(rbuf)
-
-        sender = rbuf[0]
-        mtype = rbuf[1]
+        sender, mtype = cluster.comm.recv()
 
         if sender == cluster.trainer:
             if mtype != param.MSG_RELOAD:

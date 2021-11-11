@@ -1,6 +1,6 @@
 # Methods for managing identity
 
-import torch
+#import torch
 from mpi4py import MPI
 import numpy as np
 
@@ -12,6 +12,8 @@ rank = comm.Get_rank()
 trainer = None
 inferencers = []
 actors = []
+
+print('cluster import {}'.format(rank))
 
 def resolve():
     """Resolves identity of each node. Should be called before any other
@@ -25,7 +27,10 @@ def resolve():
     cuda_stat = np.empty(comm.Get_size(), dtype='i')
 
     has_cuda = np.empty(1, dtype='i')
-    has_cuda[0] = 1 if torch.cuda.is_available() else 0
+    #has_cuda[0] = 1 if torch.cuda.is_available() else 0
+    has_cuda[0] = 1
+
+    print('{}: gathering'.format(rank))
 
     comm.Allgather([has_cuda, MPI.INT], [cuda_stat, MPI.INT])
 

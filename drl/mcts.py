@@ -1,6 +1,6 @@
 # MCTS tree/node types
 
-import param
+from . import param
 
 import numpy as np
 import random

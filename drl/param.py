@@ -1,6 +1,6 @@
 # Program parameters
 
-from env import c4
+from .env import c4
 
 # Environment parameters
 SELECTED_ENV = c4.Connect4
@@ -14,3 +14,8 @@ PSIZE = SELECTED_ENV.psize
 
 MODEL_PATH = 'model.pt'
 TARGET_NODES = 128
+ENVS_PER_ACTOR = 32
+
+# Message types
+
+MSG_RELOAD = 0

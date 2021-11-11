@@ -1,7 +1,7 @@
 # Model management
 
-import param
-import util
+from . import param
+from . import util
 
 import numpy as np
 import torch

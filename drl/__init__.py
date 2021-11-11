@@ -1,8 +1,18 @@
-from . import identity
+from . import cluster
 
 def start():
     # Resolve identity immediately
-    identity.resolve()
+    cluster.resolve()
 
     # Print our identity
-    print('Node {} : {}'.format(identity.rank, identity.task))
+    print('Node {} : {}'.format(cluster.rank, cluster.task))
+
+    # Load entry point
+    if cluster.task == 'trainer':
+        print('Starting trainer.')
+        from . import trainer
+        trainer.start()
+    elif cluster.task == 'inference':
+        print('Starting inference.')
+        from . import inference
+        inference.start()
