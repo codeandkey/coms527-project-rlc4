@@ -41,9 +41,9 @@ def resolve():
         raise RuntimeError('At least 3 nodes required')
 
     if rank == 0:
-        task = 'training'
+        task = 'train'
     elif rank == 1:
-        task = 'inference'
+        task = 'infer'
     else:
         task = 'actor'
 

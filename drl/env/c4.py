@@ -62,7 +62,7 @@ class Connect4(Environment):
                 return
 
     def observe(self):
-        out = np.zeros((7, 6, 2))
+        out = np.zeros((2, 7, 6))
 
         for x in range(7):
             for y in range(6):
@@ -72,9 +72,9 @@ class Connect4(Environment):
                     continue
 
                 if cell == self.turn:
-                    out[x, y, 0] = 1
+                    out[0, x, y] = 1
                 elif cell == -self.turn:
-                    out[x, y, 1] = 1
+                    out[1, x, y] = 1
 
         return out
 
@@ -122,3 +122,9 @@ class Connect4(Environment):
 
             if result is not None:
                 return self.turn * result
+
+        # Check if draw
+        if None in self.cells:
+            return None
+        
+        return 0

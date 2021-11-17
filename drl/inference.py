@@ -29,12 +29,11 @@ def start():
 
             model.load()
         else:
-            # Read observations
-            observations = np.empty((param.ENVS_PER_ACTOR, param.FEATURES, param.WIDTH, param.HEIGHT))
-            tags = [None] * param.ENVS_PER_ACTOR
+            if mtype != param.MSG_INFERENCE:
+                raise RuntimeError('Invalid message from trainer')
 
-            cluster.comm.recv(observations, sender)
-            cluster.comm.recv(tags, sender)
+            # Read observations
+            observations = cluster.comm.recv(source=sender)
 
             # Perform inference
             policy, value = model.infer(observations)

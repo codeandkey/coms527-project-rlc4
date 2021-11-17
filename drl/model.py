@@ -40,14 +40,14 @@ class DRLModule(nn.Module):
         x = self.relu2(x)
 
         # Policy head
-        ph = torch.flatten(x)
+        ph = torch.flatten(x, 1)
         ph = self.pfc1(ph)
         ph = self.prelu1(ph)
         ph = self.pfc2(ph)
         ph = self.pout(ph)
 
         # Value head
-        vh = torch.flatten(x)
+        vh = torch.flatten(x, 1)
         vh = self.vfc1(vh)
         vh = self.vrelu1(vh)
         vh = self.vfc2(vh)
@@ -59,8 +59,13 @@ def load():
     """Loads the model from the disk."""
     global loaded
 
-    loaded = torch.jit.load(param.MODEL_PATH).cuda()
-    util.log('Loaded model from {}'.format(param.MODEL_PATH))
+    try:
+        loaded = torch.jit.load(param.MODEL_PATH).cuda()
+        util.log('Loaded model from {}'.format(param.MODEL_PATH))
+    except ValueError:
+        return False
+
+    return True
 
 def save():
     """Saves the model to the disk."""

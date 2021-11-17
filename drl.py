@@ -3,3 +3,5 @@
 
 import drl
 drl.start()
+
+print('leaving start')
