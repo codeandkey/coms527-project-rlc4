@@ -118,13 +118,17 @@ def train(trajectories):
         shuffle=True,
     )
 
+    def cuda_tensor(t):
+        return torch.tensor(t, dtype=torch.float32).cuda()
+
     for epoch in range(param.TRAIN_EPOCHS):
         closs = 0
 
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
 
-            obs = torch.tensor(obs, dtype=torch.float32).cuda()
+            obs = cuda_tensor(obs)
+            mcts, result = cuda_tensor(mcts), cuda_tensor(result)
 
             policy, value = loaded(obs)
 
