@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data_utils
 
+import json
+
 from os import path
 
 loaded = None
@@ -108,13 +110,15 @@ def train(trajectories):
     util.log('Training model on {} trajectories'.format(len(trajectories)))
 
     def lossfn(policy, value, mcts, result):
-        return nn.CrossEntropyLoss()(value, result) - torch.log(torch.dot(policy, mcts) + 0.0001)
+        return nn.MSELoss()(value, result) - torch.sum(torch.log(torch.sum(policy * mcts, dim=1) + 0.0001))
 
     optimizer = optim.SGD(loaded.parameters(), lr=0.001, momentum=0.9)
 
-    print('obs0: {}'.format(trajectories[0]))
-    print('mcts0: {}'.format(trajectories[1]))
-    print('result0: {}'.format(trajectories[2]))
+    trajectories = [[
+        torch.tensor(obs, dtype=torch.float32).cuda(),
+        torch.tensor(mcts, dtype=torch.float32).cuda(),
+        torch.tensor(result, dtype=torch.float32).cuda()
+    ] for (obs, mcts, result) in trajectories]
 
     loader = data_utils.DataLoader(
         trajectories,
@@ -122,8 +126,8 @@ def train(trajectories):
         shuffle=True,
     )
 
-    def cuda_tensor(t):
-        return torch.tensor(t, dtype=torch.float32).cuda()
+    avgloss = 0
+    count = 0
 
     for epoch in range(param.TRAIN_EPOCHS):
         closs = 0
@@ -131,10 +135,9 @@ def train(trajectories):
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
 
-            obs = cuda_tensor(obs)
-            mcts, result = cuda_tensor(mcts), cuda_tensor(result)
-
             policy, value = loaded(obs)
+
+            value = torch.squeeze(value)
 
             loss = lossfn(policy, value, mcts, result)
             loss.backward()
@@ -142,19 +145,24 @@ def train(trajectories):
             optimizer.step()
 
             closs += loss.cpu().item()
+            avgloss += loss.cpu().item()
 
             if i % 10 == 9:
                 util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}'.format(
                     epoch + 1,
                     param.TRAIN_EPOCHS,
                     i + 1,
-                    len(trajectories) / train.TRAIN_BATCH_SIZE,
+                    int(len(trajectories) / param.TRAIN_BATCH_SIZE),
                     closs
                 ))
 
                 closs = 0
 
-    util.log('Finished training.')
+            count += mcts.shape[0]
+
+    avgloss /= count
+
+    util.log('Finished training. Average loss by input: {}'.format(avgloss))
     save()
 
     gen = 0
@@ -164,5 +172,16 @@ def train(trajectories):
 
     with open('generation', 'w') as f:
         f.write(str(gen+1))
+
+    lossbuf = []
+
+    if path.exists('loss'):
+        with open('loss', 'r') as f:
+            lossbuf = json.load(f)
+    
+    lossbuf.append([gen, avgloss])
+
+    with open('loss', 'w') as f:
+        json.dump(lossbuf, f)
 
     util.log('Wrote model generation {}'.format(gen))

@@ -53,7 +53,7 @@ def start():
             # If complete trajectories passed iteration size,
             # perform training step now.
 
-            if len(complete) >= param.TRAIN_BATCH_SIZE * param.TRAIN_NUM_BATCHES:
+            if len(complete) >= param.TRAIN_GENSIZE:
                 model.train(complete)
                 
                 for dest in cluster.inferencers:
