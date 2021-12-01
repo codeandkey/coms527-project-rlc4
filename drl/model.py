@@ -110,7 +110,7 @@ def train(trajectories):
     def lossfn(policy, value, mcts, result):
         return nn.CrossEntropyLoss()(value, result) - torch.log(torch.dot(policy, mcts) + 0.0001)
 
-    optimizer = optim.SGD(loader.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(loaded.parameters(), lr=0.001, momentum=0.9)
 
     loader = data_utils.DataLoader(
         trajectories,
