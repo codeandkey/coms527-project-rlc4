@@ -7,6 +7,9 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+import torch.nn.optim as optim
+import torch.utils.data as data
+
 loaded = None
 
 class DRLModule(nn.Module):
@@ -98,6 +101,44 @@ def generate():
 
     loaded = torch.jit.trace(mod, inputs).cuda()
 
-def train(batch):
-    """Trains the loaded model on a trajectory batch."""
-    print('train(): stub')
+def train(trajectories):
+    """Trains the loaded model on a collection of trajectories."""
+    util.log('Training model on {} trajectories'.format(len(trajectories)))
+
+    def lossfn(policy, value, mcts, result):
+        return nn.CrossEntropyLoss()(value, result) - torch.log(torch.dot(policy, mcts) + 0.0001)
+
+    optimizer = optim.SGD(mod.parameters(), lr=0.001, momentum=0.9)
+
+    loader = data.DataLoader(
+        trajectories,
+        batch_size=param.TRAIN_BATCH_SIZE,
+        shuffle=True,
+    )
+
+    for epoch in range(param.TRAIN_EPOCHS):
+        closs = 0
+
+        for i, (obs, mcts, result) in enumerate(loader, 0):
+            optimizer.zero_grad()
+            policy, value = mod(obs)
+
+            loss = lossfn(policy, value, mcts, result)
+            loss.backward()
+
+            optimizer.step()
+
+            closs += loss.item()
+
+            if i % 10 == 9:
+                util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}'.format(
+                    epoch + 1,
+                    param.TRAIN_EPOCHS,
+                    i + 1,
+                    len(trajectories) / train.TRAIN_BATCH_SIZE,
+                    closs
+                ))
+
+                closs = 0
+
+    util.log('Finished training.')    
