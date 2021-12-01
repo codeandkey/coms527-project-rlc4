@@ -124,7 +124,7 @@ def train(trajectories):
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
 
-            obs = torch.tensor(obs).cuda()
+            obs = torch.tensor(obs, dtype=torch.double).cuda()
 
             policy, value = loaded(obs)
 
