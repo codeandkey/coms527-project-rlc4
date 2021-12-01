@@ -110,24 +110,42 @@ class Tree:
 
         # Select best n
         best_n = 0
-        best_action = 0
-        best_c = None
+        best_action = None
 
         for c in self.root.children:
             if c.n > best_n:
                 best_n = c.n
                 best_action = c.action
-                best_c = c
 
-        if best_c is None:
+        if best_action is None:
+            print(str(self.env))
+            raise RuntimeError('couldn\'t pick a node, {} {} {} {}'.format([c.n for c in self.root.children], self.env.terminal(), self.env.lmm(), self.root.n))
+
+        self.advance(best_action)
+        return best_action
+
+    def advance(self, action):
+        selected = None
+
+        if self.root.children is None:
+            self.root = Node()
+            self.env.push(action)
+            return
+
+        if self.target_node is not None:
+            raise RuntimeError('advance() called while waiting for expansion')
+
+        for c in self.root.children:
+            if c.action == action:
+                selected = c
+        
+        if selected is None:
             print(str(self.env))
             raise RuntimeError('couldn\'t pick a node, {} {} {}'.format([c.n for c in self.root.children], self.env.terminal(), self.root.n))
 
-        self.root = best_c
+        self.root = selected
         self.root.parent = None
-        self.env.push(best_action)
-
-        return best_action
+        self.env.push(action)
 
     def snapshot(self):
         if self.root.n < param.MCTS_NODES:

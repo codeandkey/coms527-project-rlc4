@@ -24,10 +24,18 @@ def start():
         sender, mtype = cluster.comm.recv()
 
         if sender == cluster.trainer:
-            if mtype != param.MSG_RELOAD:
-                raise RuntimeError('Invalid message from trainer')
+            if mtype == param.MSG_RELOAD:
+                model.load()
 
-            model.load()
+            if mtype == param.MSG_PAUSE:
+                util.log('Pausing inference')
+                snd, msg = cluster.comm.recv(None, cluster.trainer)
+                
+                if snd != cluster.trainer or msg != param.MSG_UNPAUSE:
+                    raise RuntimeError('Unexpected unpause format')
+
+                util.log('Resuming inference')
+
         else:
             if mtype != param.MSG_INFERENCE:
                 raise RuntimeError('Invalid message from trainer')

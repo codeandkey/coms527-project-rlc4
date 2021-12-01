@@ -110,7 +110,7 @@ def train(trajectories):
     util.log('Training model on {} trajectories'.format(len(trajectories)))
 
     def lossfn(policy, value, mcts, result):
-        return nn.MSELoss()(value, result) - torch.sum(torch.log(torch.sum(policy * mcts, dim=1) + 0.0001))
+        return nn.MSELoss()(value, result) -torch.sum(torch.log(policy + 0.001) * mcts)
 
     optimizer = optim.SGD(loaded.parameters(), lr=0.001, momentum=0.9)
 
@@ -165,13 +165,11 @@ def train(trajectories):
     util.log('Finished training. Average loss by input: {}'.format(avgloss))
     save()
 
-    gen = 0
-    if path.exists('generation'):
-        with open('generation', 'r') as f:
-            gen = int(f.read())
+    gen = generation()
+    gen += 1
 
     with open('generation', 'w') as f:
-        f.write(str(gen+1))
+        f.write(str(gen))
 
     lossbuf = []
 
@@ -185,3 +183,12 @@ def train(trajectories):
         json.dump(lossbuf, f)
 
     util.log('Wrote model generation {}'.format(gen))
+    return gen
+
+def generation():
+    gen = 0
+    if path.exists('generation'):
+        with open('generation', 'r') as f:
+            gen = int(f.read())
+
+    return gen

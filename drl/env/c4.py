@@ -39,7 +39,7 @@ class Connect4(Environment):
                     out += '.'
             out += '\n'
 
-        return out
+        return out + 'hist: {}'.format(self.actions)
 
     def push(self, action):
         for r in range(6):
