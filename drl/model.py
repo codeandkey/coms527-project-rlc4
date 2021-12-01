@@ -10,6 +10,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data as data_utils
 
+from os import path
+
 loaded = None
 
 class DRLModule(nn.Module):
@@ -108,7 +110,7 @@ def train(trajectories):
     def lossfn(policy, value, mcts, result):
         return nn.CrossEntropyLoss()(value, result) - torch.log(torch.dot(policy, mcts) + 0.0001)
 
-    optimizer = optim.SGD(mod.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(loader.parameters(), lr=0.001, momentum=0.9)
 
     loader = data_utils.DataLoader(
         trajectories,
@@ -121,7 +123,7 @@ def train(trajectories):
 
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
-            policy, value = mod(obs)
+            policy, value = loaded(obs)
 
             loss = lossfn(policy, value, mcts, result)
             loss.backward()
@@ -141,4 +143,15 @@ def train(trajectories):
 
                 closs = 0
 
-    util.log('Finished training.')    
+    util.log('Finished training.')
+    save()
+
+    gen = 0
+    if path.exists('generation'):
+        with open('generation', 'r') as f:
+            gen = int(f.read())
+
+    with open('generation', 'w') as f:
+        f.write(str(gen+1))
+
+    util.log('Wrote model generation {}'.format(gen))
