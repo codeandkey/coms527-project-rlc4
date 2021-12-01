@@ -123,6 +123,9 @@ def train(trajectories):
 
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
+
+            obs = torch.tensor(obs).cuda()
+
             policy, value = loaded(obs)
 
             loss = lossfn(policy, value, mcts, result)
@@ -130,7 +133,7 @@ def train(trajectories):
 
             optimizer.step()
 
-            closs += loss.item()
+            closs += loss.cpu().item()
 
             if i % 10 == 9:
                 util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}'.format(
