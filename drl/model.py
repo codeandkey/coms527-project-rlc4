@@ -7,8 +7,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-import torch.nn.optim as optim
-import torch.utils.data as data
+import torch.optim as optim
+import torch.utils.data as data_utils
 
 loaded = None
 
@@ -110,7 +110,7 @@ def train(trajectories):
 
     optimizer = optim.SGD(mod.parameters(), lr=0.001, momentum=0.9)
 
-    loader = data.DataLoader(
+    loader = data_utils.DataLoader(
         trajectories,
         batch_size=param.TRAIN_BATCH_SIZE,
         shuffle=True,
