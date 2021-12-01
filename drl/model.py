@@ -112,6 +112,10 @@ def train(trajectories):
 
     optimizer = optim.SGD(loaded.parameters(), lr=0.001, momentum=0.9)
 
+    print('obs0: {}'.format(trajectories[0]))
+    print('mcts0: {}'.format(trajectories[1]))
+    print('result0: {}'.format(trajectories[2]))
+
     loader = data_utils.DataLoader(
         trajectories,
         batch_size=param.TRAIN_BATCH_SIZE,
