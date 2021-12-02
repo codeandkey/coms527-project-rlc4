@@ -35,8 +35,8 @@ def evaluate():
 
             if turn == 1:
                 while t.select() is not None:
-                    policy = np.random.dirichlet([1.0] * param.PSIZE)
-                    value = np.random.randint(-100, 100) / 100
+                    policy = [1.0 / param.PSIZE] * param.PSIZE # np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
+                    value = np.random.randint(-100, 100) / 500
 
                     t.expand(policy, value)
             else:
