@@ -112,7 +112,7 @@ def train(trajectories):
     def lossfn(policy, value, mcts, result):
         return nn.MSELoss()(value, result) -torch.sum(torch.log(policy + 0.001) * mcts)
 
-    optimizer = optim.SGD(loaded.parameters(), lr=0.001, momentum=0.9)
+    optimizer = optim.SGD(loaded.parameters(), lr=param.TRAIN_LR, momentum=0.9)
 
     trajectories = [[
         torch.tensor(obs, dtype=torch.float32).cuda(),

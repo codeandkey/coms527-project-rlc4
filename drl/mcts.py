@@ -113,7 +113,7 @@ class Tree:
         best_action = None
 
         for c in self.root.children:
-            if c.n > best_n:
+            if c.n >= best_n:
                 best_n = c.n
                 best_action = c.action
 
