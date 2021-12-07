@@ -14,69 +14,94 @@ def evaluate():
     score = 0
     util.log('Starting evaluation over {} games'.format(param.EVAL_GAMES))
 
-    for i in range(param.EVAL_GAMES):
-        game = param.SELECTED_ENV()
-        turn = random.randint(0, 1)
-        result = None
-        
-        while True:
-            result = game.terminal()
+    # store list of running games
 
-            if result is not None:
-                break
+    # while there are unfinished games:
+    # walk through games, try select
+    # build batches
+    # evaluate batches
 
-            t = mcts.Tree()
+    games = [mcts.Tree() for i in range(param.EVAL_BATCH_SIZE)]
+    turns = [random.randint(0, 1) for i in range(param.EVAL_BATCH_SIZE)]
+    results = []
 
-            for a in game.actions:
-                t.advance(a)
+    next_batch = np.empty((param.EVAL_BATCH_SIZE, param.FEATURES, param.WIDTH, param.HEIGHT))
 
-            if str(t.env) != str(game):
-                raise RuntimeError('game diverged: g:\n{}\ntree:\n{}'.format(game, t.env))
+    def advance_rng(ind):
+        if turns[ind] != 1:
+            raise RuntimeError('advance_rng() called on wrong turn')
 
-            if turn == 1:
-                while t.select() is not None:
-                    policy = [1.0 / param.PSIZE] * param.PSIZE # np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
-                    value = np.random.randint(-100, 100) / 500
+        while games[ind].select():
+            policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
+            value = np.random.randint(-100, 100) / 500
 
-                    t.expand(policy, value)
-            else:
-                while t.select() is not None:
-                    policy, value = model.infer([t.env.observe()])
-                    t.expand(policy[0], value[0])
+            games[ind].expand(policy, value)
 
-            #print('rng n: {}'.format(tree_rng.root.n))
-            #print('net n: {}'.format(tree_net.root.n))
-            #print('rng children: {}'.format(tree_rng.root.children))
-            #print('net children: {}'.format(tree_net.root.children))
+        games[ind].pick()
+        turns[ind] = 1 - turns[ind]
+    
+    completed = 0
 
-            # Make the next move.
-            action = t.pick()
+    def complete(result):
+        results.append(result)
+        completed += 1
+        print('Completed eval game with result : {}'.format(result))
 
-            game.push(action)
+    while completed < param.EVAL_GAMES:
+        # Build next batch.
+        for i in range(len(games)):
+            # If computer's turn, advance immediately
+            if turns[i] == 1:
+                advance_rng(i)
+                turns[i] = 0
 
-            if i == 0:
-                print('eval game 0 state: \n{}'.format(game))
+            if games[i].terminal() is not None:
+                # CPU just moved. We want a positive value from model POV
+                complete(games[i].terminal())
+                games[i] = mcts.Tree()
+                turns[i] = random.randint(0, 1)
 
-            turn = 1 - turn
-        
-        # Check game result
+                if turns[i] == 1:
+                    advance_rng(i)
+                    turns[i] = 0
 
-        if turn == 0:
-            # Result as-is
-            result = (result + 1) / 2
-            pass
-        else:
-            # Invert result, RNG to move
-            result = (1 - result) / 2
+            next_obs = games[i].select()
 
-        if i == 0:
-            print('eval game 0 result: {}'.format(result))
+            while next_obs is None:
+                # Advance environment immediately
+                action = games[i].pick()
+                turns[i] = 1 - turns[i]
 
-        util.log('Finished evaluation game with score: {}'.format(result))
-        score += result
+                # Check for terminal state
+                tvalue = games[i].terminal()
 
-    util.log('Finished evaluation, performance {}'.format(score / param.EVAL_GAMES))
-    return score / param.EVAL_GAMES
+                if tvalue is not None:
+                    # Model just moved. Apply negated result
+                    complete(-tvalue)
 
-        
+                    # Replace environment
+                    games[i] = mcts.Tree()
+                    turns[i] = random.randint(0, 1)
 
+                    completed += 1
+
+                    if completed % 20 == 0:
+                        util.log('{} evaluations completed'.format(completed))
+
+                # Re-select
+                nxt = games[i].select()
+
+            # Insert observation into batch
+            next_batch[i] = nxt
+
+        # Run batch
+        policy, value = model.infer(next_batch)
+
+        # Perform expansion
+        for i in range(len(games)):
+            games[i].expand(policy[i], value[i]) 
+
+    score = (sum(results) + param.EVAL_GAMES) / 2
+
+    util.log('Finished evaluation, performance {}'.format(score))
+    return score
