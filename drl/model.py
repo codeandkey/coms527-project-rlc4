@@ -153,7 +153,10 @@ def train(trajectories):
     #loaded.train(True)
 
     def lossfn(policy, value, mcts, result):
-        return nn.MSELoss()(value, result) -torch.sum(torch.log(policy + 0.001) * mcts)
+        value_loss = (value - result) ** 2
+        policy_loss = torch.sum(-mcts * (policy.float() + 1e-5).float().log(), 1)
+
+        return (value_loss.view(-1).float() + policy_loss).mean()
 
     optimizer = optim.SGD(loaded.parameters(), lr=param.TRAIN_LR, momentum=0.9)
 
@@ -191,7 +194,7 @@ def train(trajectories):
             avgloss += loss.cpu().item()
 
             if i % 10 == 9:
-                util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}'.format(
+                util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}        \r'.format(
                     epoch + 1,
                     param.TRAIN_EPOCHS,
                     i + 1,
@@ -205,6 +208,7 @@ def train(trajectories):
 
     avgloss /= count
 
+    print()
     util.log('Finished training. Average loss by input: {}'.format(avgloss))
     save()
 

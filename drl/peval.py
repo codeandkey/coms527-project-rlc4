@@ -31,7 +31,7 @@ def evaluate():
         if turns[ind] != 1:
             raise RuntimeError('advance_rng() called on wrong turn')
 
-        while games[ind].select():
+        while games[ind].select() is not None:
             policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
             value = np.random.randint(-100, 100) / 500
 
@@ -41,11 +41,6 @@ def evaluate():
         turns[ind] = 1 - turns[ind]
     
     completed = 0
-
-    def complete(result):
-        results.append(result)
-        completed += 1
-        print('Completed eval game with result : {}'.format(result))
 
     while completed < param.EVAL_GAMES:
         # Build next batch.
@@ -57,7 +52,11 @@ def evaluate():
 
             if games[i].terminal() is not None:
                 # CPU just moved. We want a positive value from model POV
-                complete(games[i].terminal())
+                value = games[i].terminal()
+                results.append(value)
+                completed += 1
+                util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
+
                 games[i] = mcts.Tree()
                 turns[i] = random.randint(0, 1)
 
@@ -77,7 +76,10 @@ def evaluate():
 
                 if tvalue is not None:
                     # Model just moved. Apply negated result
-                    complete(-tvalue)
+                    value = -games[i].terminal()
+                    results.append(value)
+                    completed += 1
+                    util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
 
                     # Replace environment
                     games[i] = mcts.Tree()
@@ -89,10 +91,10 @@ def evaluate():
                         util.log('{} evaluations completed'.format(completed))
 
                 # Re-select
-                nxt = games[i].select()
+                next_obs = games[i].select()
 
             # Insert observation into batch
-            next_batch[i] = nxt
+            next_batch[i] = next_obs
 
         # Run batch
         policy, value = model.infer(next_batch)
@@ -101,7 +103,7 @@ def evaluate():
         for i in range(len(games)):
             games[i].expand(policy[i], value[i]) 
 
-    score = (sum(results) + param.EVAL_GAMES) / 2
+    score = ((sum(results) / len(results)) + 1) / 2
 
     util.log('Finished evaluation, performance {}'.format(score))
     return score
