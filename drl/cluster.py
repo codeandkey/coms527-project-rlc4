@@ -44,9 +44,11 @@ def resolve():
         task = 'train'
     elif rank == 1:
         task = 'infer'
+    elif rank == 2:
+        task = 'infer'
     else:
         task = 'actor'
 
     trainer = 0
-    inferencers = [1]
-    actors = list(range(2, comm.Get_size()))
+    inferencers = [1, 2]
+    actors = list(range(3, comm.Get_size()))

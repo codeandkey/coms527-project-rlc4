@@ -89,7 +89,10 @@ class Tree:
 
         self.target_node.children = []
 
-        noise = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
+        noise = np.zeros((param.PSIZE,))
+
+        if self.target_node.parent is not None:
+            noise = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
 
         for i in range(len(mask)):
             if mask[i] > 0:

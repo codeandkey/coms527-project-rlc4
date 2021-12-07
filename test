@@ -1,4 +1,4 @@
 #!/bin/sh
 # launches DRL with 3 nodes for testing
 
-mpirun --oversubscribe -np 3 python $(dirname $0)/drl.py
+mpirun --oversubscribe -np 5 python $(dirname $0)/drl.py

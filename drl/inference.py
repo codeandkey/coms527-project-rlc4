@@ -38,7 +38,7 @@ def start():
 
         else:
             if mtype != param.MSG_INFERENCE:
-                raise RuntimeError('Invalid message from trainer')
+                raise RuntimeError('Invalid message from actor')
 
             # Read observations
             observations = cluster.comm.recv(source=sender)

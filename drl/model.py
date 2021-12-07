@@ -16,45 +16,86 @@ from os import path
 
 loaded = None
 
+class DRLConvolutional(nn.Module):
+    def __init__(self, features = param.FEATURES):
+        super().__init__()
+
+        self.conv1 = nn.Conv2d(features, param.MODEL_FILTERS, (3, 3), padding=(1, 1))
+        self.bn1 = nn.BatchNorm2d(param.MODEL_FILTERS)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        return self.relu(self.bn1(self.conv1(x)))
+
+class DRLResidual(nn.Module):
+    def __init__(self, features = param.MODEL_FILTERS, filters = param.MODEL_FILTERS):
+        super().__init__()
+
+        self.bn1 = nn.BatchNorm2d(filters)
+        self.bn2 = nn.BatchNorm2d(filters)
+
+        self.conv1 = nn.Conv2d(features, filters, (3, 3), padding=(1, 1))
+        self.conv2 = nn.Conv2d(filters, filters, (3, 3), padding=(1, 1))
+
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        skip = x
+        x = self.relu(self.bn1(self.conv1(x)))
+        x = self.bn2(self.conv2(x))
+        x += skip
+        return self.relu(x)
+
 class DRLModule(nn.Module):
     def __init__(self):
         super().__init__()
 
+        self.relu = nn.ReLU()
+
+        # Convolutional block
+        self.conv = DRLConvolutional()
+
         # Residual blocks
-        self.conv1 = nn.Conv2d(param.FEATURES, param.FEATURES, (3, 3), padding=(1, 1))
-        self.relu1 = nn.ReLU()
-        self.conv2 = nn.Conv2d(param.FEATURES, param.FEATURES, (3, 3), padding=(1, 1))
-        self.relu2 = nn.ReLU()
+        for i in range(param.MODEL_RESIDUALS):
+            setattr(self, 'residual_{}'.format(i), DRLResidual())
 
         # Policy head layers
-        self.pfc1 = nn.Linear(param.FEATURES * param.WIDTH * param.HEIGHT, 128)
+        self.pconv1 = nn.Conv2d(param.MODEL_FILTERS, 32, (1, 1), stride=1)
+        self.pbn = nn.BatchNorm2d(32)
+        self.pfc1 = nn.Linear(32 * param.WIDTH * param.HEIGHT, 128)
         self.prelu1 = nn.ReLU()
         self.pfc2 = nn.Linear(128, param.PSIZE)
-        self.pout = nn.Softmax(-1)
+        self.pout = nn.LogSoftmax(dim=1)
 
         # Value head layers
-        self.vfc1 = nn.Linear(param.FEATURES * param.WIDTH * param.HEIGHT, 128)
+        self.vconv1 = nn.Conv2d(param.MODEL_FILTERS, 3, (1, 1), stride=1)
+        self.vbn = nn.BatchNorm2d(3)
+        self.vfc1 = nn.Linear(3 * param.WIDTH * param.HEIGHT, 128)
         self.vrelu1 = nn.ReLU()
         self.vfc2 = nn.Linear(128, 1)
         self.vout = nn.Tanh()
 
     def forward(self, observation):
-        # Residual layers
         x = observation
-        x = self.conv1(x)
-        x = self.relu1(x)
-        x = self.conv2(x)
-        x = self.relu2(x)
+
+        # Convolutional layer
+        x = self.conv(x)
+
+        # Residuals
+        for i in range(param.MODEL_RESIDUALS):
+            x = getattr(self, 'residual_{}'.format(i))(x)
 
         # Policy head
-        ph = torch.flatten(x, 1)
+        ph = self.relu(self.pbn(self.pconv1(x)))
+        ph = torch.flatten(ph, 1)
         ph = self.pfc1(ph)
         ph = self.prelu1(ph)
         ph = self.pfc2(ph)
-        ph = self.pout(ph)
+        ph = self.pout(ph).exp()
 
         # Value head
-        vh = torch.flatten(x, 1)
+        vh = self.relu(self.vbn(self.vconv1(x)))
+        vh = torch.flatten(vh, 1)
         vh = self.vfc1(vh)
         vh = self.vrelu1(vh)
         vh = self.vfc2(vh)
@@ -108,6 +149,8 @@ def generate():
 def train(trajectories):
     """Trains the loaded model on a collection of trajectories."""
     util.log('Training model on {} trajectories'.format(len(trajectories)))
+
+    #loaded.train(True)
 
     def lossfn(policy, value, mcts, result):
         return nn.MSELoss()(value, result) -torch.sum(torch.log(policy + 0.001) * mcts)
@@ -183,6 +226,7 @@ def train(trajectories):
         json.dump(lossbuf, f)
 
     util.log('Wrote model generation {}'.format(gen))
+    #loaded.train(False)
     return gen
 
 def generation():
