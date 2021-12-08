@@ -22,23 +22,23 @@ def evaluate():
     # evaluate batches
 
     games = [mcts.Tree() for i in range(param.EVAL_BATCH_SIZE)]
-    turns = [random.randint(0, 1) for i in range(param.EVAL_BATCH_SIZE)]
+    mturn = [random.randint(0, 1) * 2 - 1 for i in range(param.EVAL_BATCH_SIZE)]
     results = []
 
     next_batch = np.empty((param.EVAL_BATCH_SIZE, param.FEATURES, param.WIDTH, param.HEIGHT))
 
     def advance_rng(ind):
-        if turns[ind] != 1:
+        if games[ind].env.turn == mturn[ind]:
             raise RuntimeError('advance_rng() called on wrong turn')
 
         while games[ind].select() is not None:
             policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
-            value = np.random.randint(-100, 100) / 500
+            value = np.random.randint(-100, 100) / 100
 
             games[ind].expand(policy, value)
 
         games[ind].pick()
-        turns[ind] = 1 - turns[ind]
+        games[ind].clear_subtree()
     
     completed = 0
 
@@ -46,44 +46,40 @@ def evaluate():
         # Build next batch.
         for i in range(len(games)):
             # If computer's turn, advance immediately
-            if turns[i] == 1:
+            if games[i].env.turn != mturn[i]:
                 advance_rng(i)
-                turns[i] = 0
 
             if games[i].terminal() is not None:
-                # CPU just moved. We want a positive value from model POV
                 value = games[i].terminal()
-                results.append(value)
+                results.append(value * mturn[i])
                 completed += 1
                 util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
 
                 games[i] = mcts.Tree()
-                turns[i] = random.randint(0, 1)
+                mturn[i] = random.randint(0, 1) * 2 - 1
 
-                if turns[i] == 1:
+                if games[i].env.turn != mturn[i]:
                     advance_rng(i)
-                    turns[i] = 0
 
             next_obs = games[i].select()
 
             while next_obs is None:
                 # Advance environment immediately
                 action = games[i].pick()
-                turns[i] = 1 - turns[i]
+                games[i].clear_subtree()
 
                 # Check for terminal state
                 tvalue = games[i].terminal()
 
                 if tvalue is not None:
                     # Model just moved. Apply negated result
-                    value = -games[i].terminal()
-                    results.append(value)
+                    results.append(tvalue * mturn[i])
                     completed += 1
                     util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
 
                     # Replace environment
                     games[i] = mcts.Tree()
-                    turns[i] = random.randint(0, 1)
+                    mturn[i] = random.randint(0, 1) * 2 - 1
 
                     completed += 1
 

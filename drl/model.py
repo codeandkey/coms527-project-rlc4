@@ -150,7 +150,7 @@ def train(trajectories):
     """Trains the loaded model on a collection of trajectories."""
     util.log('Training model on {} trajectories'.format(len(trajectories)))
 
-    #loaded.train(True)
+    loaded.train(True)
 
     def lossfn(policy, value, mcts, result):
         value_loss = (value - result) ** 2
@@ -176,8 +176,6 @@ def train(trajectories):
     count = 0
 
     for epoch in range(param.TRAIN_EPOCHS):
-        closs = 0
-
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
 
@@ -190,8 +188,8 @@ def train(trajectories):
 
             optimizer.step()
 
-            closs += loss.cpu().item()
-            avgloss += loss.cpu().item()
+            closs = loss.cpu().item()
+            avgloss += closs
 
             if i % 10 == 9:
                 util.log('Epoch {}/{}, batch {}/{}, loss {:.1f}        \r'.format(
@@ -201,8 +199,6 @@ def train(trajectories):
                     int(len(trajectories) / param.TRAIN_BATCH_SIZE),
                     closs
                 ))
-
-                closs = 0
 
             count += mcts.shape[0]
 
@@ -230,7 +226,7 @@ def train(trajectories):
         json.dump(lossbuf, f)
 
     util.log('Wrote model generation {}'.format(gen))
-    #loaded.train(False)
+    loaded.train(False)
     return gen
 
 def generation():

@@ -5,7 +5,7 @@ import numpy as np
 class Connect4(Environment):
     width = 7
     height = 6
-    features = 2
+    features = 3
     psize = 7
 
     def __init__(self):
@@ -62,18 +62,21 @@ class Connect4(Environment):
                 return
 
     def observe(self):
-        out = np.zeros((2, 7, 6))
+        out = np.zeros((3, 7, 6))
 
         for x in range(7):
             for y in range(6):
+                if self.turn == -1:
+                    out[2, x, y] = 1
+
                 cell = self.cells[x + 7 * y]
 
                 if cell is None:
                     continue
 
-                if cell == self.turn:
+                if cell == 1:
                     out[0, x, y] = 1
-                elif cell == -self.turn:
+                elif cell == -1:
                     out[1, x, y] = 1
 
         return out
@@ -121,7 +124,7 @@ class Connect4(Environment):
             result = check(s)
 
             if result is not None:
-                return self.turn * result
+                return result
 
         # Check if draw
         if None in self.cells:

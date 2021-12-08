@@ -39,19 +39,13 @@ def start():
         if mtype == param.MSG_COMPLETE_TRAJECTORY:
             tag, value = cluster.comm.recv(source=sender)
 
-            # Translate trajectories, apply value multiplier
-            # We start with the observation immediately BEFORE
-            # the terminal state is reached, so we flip the value
-            # initially.
-            value_mul = -1 # TODO: FLIP THIS BACK to -1
+            # Translate trajectories
 
             if tag not in incomplete:
                 raise RuntimeError('tag {} not in incomplete trajectories'.format(tag))
 
             for (obs, mcts) in reversed(incomplete[tag]):
-                complete.append((obs, mcts, value_mul * value))
-
-                value_mul *= -1
+                complete.append((obs, mcts, value))
 
             del incomplete[tag]
 
@@ -82,7 +76,15 @@ def start():
                     for dst in cluster.inferencers:
                         cluster.comm.send((cluster.rank, param.MSG_UNPAUSE), dst)
 
+                # Pause inference. (TEMP)
+                #for dst in cluster.inferencers:
+                #    cluster.comm.send((cluster.rank, param.MSG_PAUSE), dst)
+
                 model.train(complete)
+
+                # Unpause inference. (TEMP)
+                #for dst in cluster.inferencers:
+                #    cluster.comm.send((cluster.rank, param.MSG_UNPAUSE), dst)
                 
                 for dest in cluster.inferencers:
                     cluster.comm.send((cluster.rank, param.MSG_RELOAD), dest)
