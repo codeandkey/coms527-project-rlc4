@@ -1,0 +1,4 @@
+#!/bin/sh
+# launches DRL with all available cpus
+
+mpirun python $(dirname $0)/drl.py
