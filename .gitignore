@@ -1,4 +1,8 @@
-build
 .vscode/c_cpp_properties.json
 .vscode/settings.json
 **/__pycache__
+model.pt
+loss
+eval
+generation
+results.png
