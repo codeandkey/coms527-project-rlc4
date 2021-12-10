@@ -28,7 +28,7 @@ class Node:
         best_child = None
 
         for c in self.children:
-            exploitation = c.q()
+            exploitation = -c.q()
             exploration = c.p * param.MCTS_CPUCT * math.sqrt(self.n) / (1 + c.n)
 
             uct = exploitation + exploration
@@ -54,7 +54,6 @@ class Tree:
     def clear_subtree(self):
         self.root = Node()
         self.root.turn = self.env.turn
-        self.forward_ply = 0
         self.target_node = None
 
     def select(self, root=None):
@@ -72,6 +71,7 @@ class Tree:
 
         if tvalue is not None:
             root.backprop(tvalue)
+            self.target_node = root
             self._rewind()
             return self.select()
 
@@ -83,7 +83,6 @@ class Tree:
             return self.env.observe()
 
         self.env.push(child.action)
-        self.forward_ply += 1
 
         return self.select(child)
     
@@ -93,6 +92,9 @@ class Tree:
         mask = self.env.lmm()
 
         self.target_node.children = []
+
+        if self.target_node.turn != self.env.turn:
+            raise RuntimeError('turn mismatch')
 
         # [ this encourages exploration INITIALLY, but eliminates noise when carrying over trees ]
         #noise = np.zeros((param.PSIZE,))
@@ -107,17 +109,19 @@ class Tree:
             if mask[i] > 0:
                 child = Node()
 
-                child.turn = -self.env.turn
+                child.turn = -self.target_node.turn
                 child.action = i
                 child.parent = self.target_node
                 child.p = policy[i] * (1 - param.MCTS_NOISE_WEIGHT) + noise[i] * param.MCTS_NOISE_WEIGHT
 
                 self.target_node.children.append(child)
 
-        self.target_node = None
         self._rewind()
 
     def pick(self):
+        if self.root.turn != self.env.turn:
+            raise RuntimeError('turn mismatch')
+
         if self.root.n < param.MCTS_NODES:
             raise RuntimeError('pick() called with bad tree n {}'.format(self.root.n))
 
@@ -143,6 +147,7 @@ class Tree:
         if self.root.children is None:
             self.root = Node()
             self.env.push(action)
+            self.root.turn = self.env.turn
             return
 
         if self.target_node is not None:
@@ -180,10 +185,14 @@ class Tree:
         return out
 
     def _rewind(self):
-        for i in range(self.forward_ply):
-            self.env.pop()
+        if not self.target_node:
+            raise RuntimeError('rewind() called without target node')
 
-        self.forward_ply = 0
+        while self.target_node != self.root:
+            self.env.pop()
+            self.target_node = self.target_node.parent
+
+        self.target_node = None
 
     def terminal(self):
         return self.env.terminal()

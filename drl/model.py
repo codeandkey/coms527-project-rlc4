@@ -25,6 +25,8 @@ class DRLConvolutional(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
+        #x = x.view(-1, param.FEATURES, param.WIDTH, param.HEIGHT)
+        x = x.permute(0, 3, 1, 2)
         return self.relu(self.bn1(self.conv1(x)))
 
 class DRLResidual(nn.Module):
@@ -34,8 +36,8 @@ class DRLResidual(nn.Module):
         self.bn1 = nn.BatchNorm2d(filters)
         self.bn2 = nn.BatchNorm2d(filters)
 
-        self.conv1 = nn.Conv2d(features, filters, (3, 3), padding=(1, 1))
-        self.conv2 = nn.Conv2d(filters, filters, (3, 3), padding=(1, 1))
+        self.conv1 = nn.Conv2d(features, filters, (3, 3), padding=(1, 1), bias=False)
+        self.conv2 = nn.Conv2d(filters, filters, (3, 3), padding=(1, 1), bias=False)
 
         self.relu = nn.ReLU()
 
@@ -62,18 +64,14 @@ class DRLModule(nn.Module):
         # Policy head layers
         self.pconv1 = nn.Conv2d(param.MODEL_FILTERS, 32, (1, 1), stride=1)
         self.pbn = nn.BatchNorm2d(32)
-        self.pfc1 = nn.Linear(32 * param.WIDTH * param.HEIGHT, 128)
-        self.prelu1 = nn.ReLU()
-        self.pfc2 = nn.Linear(128, param.PSIZE)
+        self.pfc1 = nn.Linear(32 * param.WIDTH * param.HEIGHT, 7)
         self.pout = nn.LogSoftmax(dim=1)
 
         # Value head layers
         self.vconv1 = nn.Conv2d(param.MODEL_FILTERS, 3, (1, 1), stride=1)
         self.vbn = nn.BatchNorm2d(3)
         self.vfc1 = nn.Linear(3 * param.WIDTH * param.HEIGHT, 128)
-        self.vrelu1 = nn.ReLU()
         self.vfc2 = nn.Linear(128, 1)
-        self.vout = nn.Tanh()
 
     def forward(self, observation):
         x = observation
@@ -87,19 +85,18 @@ class DRLModule(nn.Module):
 
         # Policy head
         ph = self.relu(self.pbn(self.pconv1(x)))
-        ph = torch.flatten(ph, 1)
+        #ph = ph.view(-1, 32 * param.WIDTH * param.HEIGHT)
+        ph = ph.flatten(1)
         ph = self.pfc1(ph)
-        ph = self.prelu1(ph)
-        ph = self.pfc2(ph)
         ph = self.pout(ph).exp()
 
         # Value head
         vh = self.relu(self.vbn(self.vconv1(x)))
-        vh = torch.flatten(vh, 1)
-        vh = self.vfc1(vh)
-        vh = self.vrelu1(vh)
+        #vh = vh.view(-1, 3 * param.WIDTH * param.HEIGHT)
+        vh = vh.flatten(1)
+        vh = self.relu(self.vfc1(vh))
         vh = self.vfc2(vh)
-        vh = self.vout(vh)
+        vh = torch.tanh(vh)
 
         return ph, vh
 
@@ -142,7 +139,7 @@ def generate():
     util.log('Generating model')
 
     mod = DRLModule()
-    inputs = torch.tensor(np.zeros((1, param.FEATURES, param.WIDTH, param.HEIGHT), dtype=np.float32))
+    inputs = torch.tensor(np.zeros((1, param.WIDTH, param.HEIGHT, param.FEATURES), dtype=np.float32))
 
     loaded = torch.jit.trace(mod, inputs).cuda()
 

@@ -13,7 +13,7 @@ trainer = None
 inferencers = []
 actors = []
 
-print('cluster import {}'.format(rank))
+#print('cluster import {}'.format(rank))
 
 def resolve():
     """Resolves identity of each node. Should be called before any other
@@ -30,11 +30,11 @@ def resolve():
     #has_cuda[0] = 1 if torch.cuda.is_available() else 0
     has_cuda[0] = 1
 
-    print('{}: gathering'.format(rank))
+    #print('{}: gathering'.format(rank))
 
     comm.Allgather([has_cuda, MPI.INT], [cuda_stat, MPI.INT])
 
-    print('CUDA status: {}'.format(cuda_stat))
+    #print('CUDA status: {}'.format(cuda_stat))
 
     # TEMP: just pick 1 training, 1 inference, and N-2 actors
     if len(cuda_stat) < 3:

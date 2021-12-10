@@ -51,8 +51,11 @@ class Connect4(Environment):
                 self.turn = -self.turn
                 return
 
+        raise RuntimeError('illegal move')
+
     def pop(self):
         last = self.actions.pop()
+        self.turn = -self.turn
 
         for r in reversed(range(6)):
             ind = r * 7 + last
@@ -61,13 +64,14 @@ class Connect4(Environment):
                 self.cells[ind] = None
                 return
 
+
     def observe(self):
-        out = np.zeros((3, 7, 6))
+        out = np.zeros((7, 6, 3))
 
         for x in range(7):
             for y in range(6):
                 if self.turn == -1:
-                    out[2, x, y] = 1
+                    out[x, y, 2] = 1
 
                 cell = self.cells[x + 7 * y]
 
@@ -75,9 +79,9 @@ class Connect4(Environment):
                     continue
 
                 if cell == 1:
-                    out[0, x, y] = 1
+                    out[x, y, 0] = 1
                 elif cell == -1:
-                    out[1, x, y] = 1
+                    out[x, y, 1] = 1
 
         return out
 

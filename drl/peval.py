@@ -14,18 +14,11 @@ def evaluate():
     score = 0
     util.log('Starting evaluation over {} games'.format(param.EVAL_GAMES))
 
-    # store list of running games
-
-    # while there are unfinished games:
-    # walk through games, try select
-    # build batches
-    # evaluate batches
-
     games = [mcts.Tree() for i in range(param.EVAL_BATCH_SIZE)]
     mturn = [random.randint(0, 1) * 2 - 1 for i in range(param.EVAL_BATCH_SIZE)]
     results = []
 
-    next_batch = np.empty((param.EVAL_BATCH_SIZE, param.FEATURES, param.WIDTH, param.HEIGHT))
+    next_batch = np.empty((param.EVAL_BATCH_SIZE, param.WIDTH, param.HEIGHT, param.FEATURES))
 
     def advance_rng(ind):
         if games[ind].env.turn == mturn[ind]:
@@ -34,10 +27,17 @@ def evaluate():
         while games[ind].select() is not None:
             policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
             value = np.random.randint(-100, 100) / 100
-
+        
             games[ind].expand(policy, value)
 
+        #mv = None
+        #while True:
+        #    mv = random.randint(0, 6)
+        #    if games[ind].env.lmm()[mv] > 0.5:
+        #        break
+
         games[ind].pick()
+        #games[ind].advance(mv)
         games[ind].clear_subtree()
     
     completed = 0
@@ -54,6 +54,9 @@ def evaluate():
                 results.append(value * mturn[i])
                 completed += 1
                 util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
+
+                if completed % 20 == 0:
+                    util.log('{} evaluations completed'.format(completed))
 
                 games[i] = mcts.Tree()
                 mturn[i] = random.randint(0, 1) * 2 - 1
@@ -72,7 +75,6 @@ def evaluate():
                 tvalue = games[i].terminal()
 
                 if tvalue is not None:
-                    # Model just moved. Apply negated result
                     results.append(tvalue * mturn[i])
                     completed += 1
                     util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
@@ -80,6 +82,9 @@ def evaluate():
                     # Replace environment
                     games[i] = mcts.Tree()
                     mturn[i] = random.randint(0, 1) * 2 - 1
+
+                    if games[i].env.turn != mturn[i]:
+                        advance_rng(i)
 
                     completed += 1
 

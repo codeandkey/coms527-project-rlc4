@@ -19,7 +19,7 @@ def start():
     completed = 0
 
     while True:
-        next_batch = np.empty((param.ENVS_PER_ACTOR, param.FEATURES, param.WIDTH, param.HEIGHT))
+        next_batch = np.empty((param.ENVS_PER_ACTOR, param.WIDTH, param.HEIGHT, param.FEATURES))
 
         for i in range(len(trees)):
             nxt = trees[i].select()

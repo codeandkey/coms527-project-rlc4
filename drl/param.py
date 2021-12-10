@@ -17,7 +17,7 @@ MODEL_PATH = 'model.pt'
 ENVS_PER_ACTOR = 32
 
 # Model architecture
-MODEL_RESIDUALS = 3
+MODEL_RESIDUALS = 8
 MODEL_FILTERS = 128
 
 # Message types
@@ -32,9 +32,9 @@ MSG_UNPAUSE = 5
 # Model parameters
 
 TRAIN_GENSIZE = 1024
-TRAIN_BATCH_SIZE = 16
-TRAIN_EPOCHS = 3
-TRAIN_LR = 0.01
+TRAIN_BATCH_SIZE = 32
+TRAIN_EPOCHS = 5
+TRAIN_LR = 0.001
 
 # MCTS parameters
 
