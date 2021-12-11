@@ -1,7 +1,5 @@
 #/usr/bin/python3
-# GRL startup script
+# DRL startup script
 
 import drl
 drl.start()
-
-print('leaving start')
