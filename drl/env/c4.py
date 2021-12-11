@@ -9,6 +9,8 @@ class Connect4(Environment):
     psize = 7
 
     def __init__(self):
+        """Initializes a new connect-4 environment. 'X' turn corresponds to
+           1, 'O' to -1. 'X' to move first."""
         super()
         
         self.cells = [None] * 42
@@ -16,9 +18,11 @@ class Connect4(Environment):
         self.actions = []
 
     def cell(self, x, y):
+        """(internal) Helper method to query the state of a game cell."""
         return self.cells[x + y * 7]
 
     def lmm(self):
+        """Returns a mask of legal moves."""
         out = np.zeros(7)
 
         for c in range(7):
@@ -27,6 +31,7 @@ class Connect4(Environment):
         return out
 
     def __str__(self):
+        """Converts this environment to a printable string."""
         out = ''
 
         for y in reversed(range(6)):
@@ -42,6 +47,7 @@ class Connect4(Environment):
         return out + 'hist: {}'.format(self.actions)
 
     def push(self, action):
+        """Performs an action. <action> must be a legal move."""
         for r in range(6):
             ind = r * 7 + action
 
@@ -54,6 +60,7 @@ class Connect4(Environment):
         raise RuntimeError('illegal move')
 
     def pop(self):
+        """Unperforms the last action."""
         last = self.actions.pop()
         self.turn = -self.turn
 
@@ -66,6 +73,7 @@ class Connect4(Environment):
 
 
     def observe(self):
+        """Returns a 7x6x3 numpy array describing the state of the game."""
         out = np.zeros((7, 6, 3))
 
         for x in range(7):
@@ -86,6 +94,8 @@ class Connect4(Environment):
         return out
 
     def terminal(self):
+        """Returns 1 if 'X' wins, -1 if 'O' wins, 0 if draw, or None if the
+           game is ongoing."""
         # Check for 4-in-a-row
         def check(segment):
             values = [self.cells[x] for x in segment]
