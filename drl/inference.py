@@ -8,6 +8,7 @@ from . import util
 import numpy as np
 
 def start():
+    """Starts an inference node."""
     util.log('Starting inference task.')
 
     # Wait for first model reload from trainer

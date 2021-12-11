@@ -13,6 +13,7 @@ trees = [mcts.Tree() for i in range(param.ENVS_PER_ACTOR)]
 tags = [str(uuid.uuid4()) for i in range(param.ENVS_PER_ACTOR)]
 
 def start():
+    """Starts an actor node."""
     # Start actor loop
 
     util.log('Starting actor loop')

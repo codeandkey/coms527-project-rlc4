@@ -1,6 +1,7 @@
 from . import cluster
 
 def start():
+    """Starts the training process."""
     # Resolve identity immediately
     cluster.resolve()
 
