@@ -8,6 +8,8 @@ import random
 
 class Node:
     def __init__(self):
+        """Initializes a new Node with no turn. Turn must be assigned
+           BEFORE any backprops."""
         self.n = 0
         self.w = 0
         self.children = None
@@ -15,12 +17,15 @@ class Node:
         self.turn = None
 
     def q(self):
+        """Returns the average value at this node."""
         if self.n == 0:
             return 0
         
         return self.w / self.n
 
     def select(self):
+        """Returns the best child node (maximized PUCT), or None if this node
+           has no children."""
         if not self.children:
             return None
 
@@ -28,7 +33,7 @@ class Node:
         best_child = None
 
         for c in self.children:
-            exploitation = -c.q()
+            exploitation = -c.q() # negamax MCTS! awesome
             exploration = c.p * param.MCTS_CPUCT * math.sqrt(self.n) / (1 + c.n)
 
             uct = exploitation + exploration
@@ -40,6 +45,7 @@ class Node:
         return best_child
 
     def backprop(self, value):
+        """Backpropagates a value through the tree."""
         self.n += 1
         self.w += value * self.turn
 
@@ -48,10 +54,12 @@ class Node:
 
 class Tree:
     def __init__(self):
+        """Initializes a new tree at the starting position."""
         self.env = param.SELECTED_ENV()
         self.clear_subtree()
 
     def clear_subtree(self):
+        """Clears all nodes from the tree and assigns a fresh root."""
         self.root = Node()
         self.root.turn = self.env.turn
         self.target_node = None
@@ -87,6 +95,8 @@ class Tree:
         return self.select(child)
     
     def expand(self, policy, value):
+        """Expands the tree at a waiting node. Must be called after select()
+           has returned a non-None value."""
         self.target_node.backprop(value)
 
         mask = self.env.lmm()
@@ -119,6 +129,7 @@ class Tree:
         self._rewind()
 
     def pick(self):
+        """Picks the most promising next action from the tree and performs it."""
         if self.root.turn != self.env.turn:
             raise RuntimeError('turn mismatch')
 
@@ -142,6 +153,8 @@ class Tree:
         return best_action
 
     def advance(self, action):
+        """Advances the tree by a specific action, creating new nodes
+           as necessary."""
         selected = None
 
         if self.root.children is None:
@@ -166,6 +179,7 @@ class Tree:
         self.env.push(action)
 
     def snapshot(self):
+        """Returns a vector of node visit counts at the root level."""
         if self.root.n < param.MCTS_NODES:
             raise RuntimeError('snapshot() called with root n {}'.format(self.root.n))
 
@@ -185,6 +199,8 @@ class Tree:
         return out
 
     def _rewind(self):
+        """(internal) Rewinds the internal environment state to align back with
+           the root node. Resets the target node member as well."""
         if not self.target_node:
             raise RuntimeError('rewind() called without target node')
 
@@ -195,4 +211,5 @@ class Tree:
         self.target_node = None
 
     def terminal(self):
+        """Returns the terminal state of the environment."""
         return self.env.terminal()
