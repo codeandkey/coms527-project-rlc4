@@ -14,11 +14,11 @@ PSIZE = SELECTED_ENV.psize
 
 MODEL_PATH = 'model.pt'
 
-ENVS_PER_ACTOR = 32
+ENVS_PER_ACTOR = 32 # environments on each actor, also inference batchsize
 
 # Model architecture
-MODEL_RESIDUALS = 8
-MODEL_FILTERS = 128
+MODEL_RESIDUALS = 8 # residual layer count
+MODEL_FILTERS = 128 # filters per convolutional/half-residual layer
 
 # Message types
 
@@ -31,20 +31,20 @@ MSG_UNPAUSE = 5
 
 # Model parameters
 
-TRAIN_GENSIZE = 1024
-TRAIN_BATCH_SIZE = 32
-TRAIN_EPOCHS = 5
-TRAIN_LR = 0.001
+TRAIN_GENSIZE = 1024  # complete trajectories per generation
+TRAIN_BATCH_SIZE = 32 # training batchsize
+TRAIN_EPOCHS = 5      # training epochs
+TRAIN_LR = 0.001      # learning rate (SGD)
 
 # MCTS parameters
 
-MCTS_CPUCT = 1
-MCTS_NODES = 64
-MCTS_NOISE_ALPHA = 1 / PSIZE
-MCTS_NOISE_WEIGHT = 0.05
+MCTS_CPUCT = 1               # c_puct parameter (see PUCT formula in alphazero)
+MCTS_NODES = 64              # target root node count per move
+MCTS_NOISE_ALPHA = 1 / PSIZE # Dirichlet noise alpha
+MCTS_NOISE_WEIGHT = 0.05     # noise weight per expansion
 
 # Eval parameters
 
-EVAL_BATCH_SIZE = 32
-EVAL_GAMES = 128
-EVAL_INTERVAL = 25
+EVAL_BATCH_SIZE = 32 # concurrent eval games
+EVAL_GAMES = 128     # total eval games
+EVAL_INTERVAL = 25   # evalute model every n generations
