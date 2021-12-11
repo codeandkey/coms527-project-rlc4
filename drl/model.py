@@ -227,6 +227,7 @@ def train(trajectories):
     return gen
 
 def generation():
+    """Returns the current model generation, or 0 if it has not been saved."""
     gen = 0
     if path.exists('generation'):
         with open('generation', 'r') as f:
