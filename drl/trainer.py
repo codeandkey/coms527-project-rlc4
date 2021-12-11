@@ -14,6 +14,7 @@ incomplete = {}
 complete = []
 
 def start():
+    """Starts a training node."""
     util.log('Starting trainer task.')
 
     if not model.load():
