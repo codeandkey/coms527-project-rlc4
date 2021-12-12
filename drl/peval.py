@@ -41,6 +41,17 @@ def evaluate():
         games[ind].pick()
         #games[ind].advance(mv)
         games[ind].clear_subtree()
+
+    def performance():
+        score = 0
+        count = 0
+
+        for r in results:
+            if r is not None:
+                score += r
+                count += 1
+
+        return ((score / count) * 2) - 1
     
     def complete_game(i):
         # Check terminal value
@@ -61,10 +72,7 @@ def evaluate():
         if games[i].env.turn != mturn[i]:
             advance_rng(i)
 
-        util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
-
-        if completed % 20 == 0:
-            util.log('{} evaluations completed'.format(completed))
+        util.log('Current performance {:.2f}'.format(performance()))
 
     while None in results:
         # Build next batch.
@@ -102,7 +110,7 @@ def evaluate():
         for i in range(len(games)):
             games[i].expand(policy[i], value[i]) 
 
-    score = ((sum(results) / len(results)) + 1) / 2
+    score = performance()    
 
     util.log('Finished evaluation, performance {}'.format(score))
     return score
