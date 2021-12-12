@@ -16,8 +16,10 @@ def evaluate():
 
     games = [mcts.Tree() for i in range(param.EVAL_BATCH_SIZE)]
     mturn = [random.randint(0, 1) * 2 - 1 for i in range(param.EVAL_BATCH_SIZE)]
-    results = []
+    ids = list(range(param.EVAL_BATCH_SIZE))
+    results = [None for i in range(param.EVAL_GAMES)]
 
+    next_game_id = param.EVAL_BATCH_SIZE
     next_batch = np.empty((param.EVAL_BATCH_SIZE, param.WIDTH, param.HEIGHT, param.FEATURES))
 
     def advance_rng(ind):
@@ -26,7 +28,7 @@ def evaluate():
 
         while games[ind].select() is not None:
             policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
-            value = np.random.randint(-100, 100) / 100
+            value = np.random.randint(-100, 100) / 300
         
             games[ind].expand(policy, value)
 
@@ -40,9 +42,31 @@ def evaluate():
         #games[ind].advance(mv)
         games[ind].clear_subtree()
     
-    completed = 0
+    def complete_game(i):
+        # Check terminal value
+        value = games[i].terminal()
 
-    while completed < param.EVAL_GAMES:
+        if value is None:
+            raise RuntimeError('complete() called on incomplete game')
+
+        # Store result from model pov
+        results[ids[i]] = value * mturn[i]
+
+        # Reset environment
+        games[i] = mcts.Tree()
+        mturn[i] = random.randint(0, 1) * 2 - 1
+        ids[i] = next_game_id
+        next_game_id += 1
+
+        if games[i].env.turn != mturn[i]:
+            advance_rng(i)
+
+        util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
+
+        if completed % 20 == 0:
+            util.log('{} evaluations completed'.format(completed))
+
+    while None in results:
         # Build next batch.
         for i in range(len(games)):
             # If computer's turn, advance immediately
@@ -50,19 +74,7 @@ def evaluate():
                 advance_rng(i)
 
             if games[i].terminal() is not None:
-                value = games[i].terminal()
-                results.append(value * mturn[i])
-                completed += 1
-                util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
-
-                if completed % 20 == 0:
-                    util.log('{} evaluations completed'.format(completed))
-
-                games[i] = mcts.Tree()
-                mturn[i] = random.randint(0, 1) * 2 - 1
-
-                if games[i].env.turn != mturn[i]:
-                    advance_rng(i)
+                complete_game(i)
 
             next_obs = games[i].select()
 
@@ -74,22 +86,8 @@ def evaluate():
                 # Check for terminal state
                 tvalue = games[i].terminal()
 
-                if tvalue is not None:
-                    results.append(tvalue * mturn[i])
-                    completed += 1
-                    util.log('Current performance {:.2f}'.format(((sum(results) / len(results)) + 1) / 2))
-
-                    # Replace environment
-                    games[i] = mcts.Tree()
-                    mturn[i] = random.randint(0, 1) * 2 - 1
-
-                    if games[i].env.turn != mturn[i]:
-                        advance_rng(i)
-
-                    completed += 1
-
-                    if completed % 20 == 0:
-                        util.log('{} evaluations completed'.format(completed))
+                if games[i].terminal() is not None:
+                    complete_game(i)
 
                 # Re-select
                 next_obs = games[i].select()
