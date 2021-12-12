@@ -16,6 +16,11 @@ from os import path
 
 loaded = None
 
+cuda_available = torch.cuda.is_available()
+
+if not cuda_available:
+    util.log('WARNING: CUDA is not available')
+
 class DRLConvolutional(nn.Module):
     def __init__(self, features = param.FEATURES):
         super().__init__()
@@ -105,7 +110,11 @@ def load():
     global loaded
 
     try:
-        loaded = torch.jit.load(param.MODEL_PATH).cuda()
+        loaded = torch.jit.load(param.MODEL_PATH)
+
+        if cuda_available:
+            loaded = loaded.cuda()
+
         util.log('Loaded model from {}'.format(param.MODEL_PATH))
     except ValueError:
         return False
@@ -127,7 +136,11 @@ def infer(observations):
     if loaded is None:
         raise RuntimeError('No model loaded')
 
-    tensor = torch.tensor(observations, dtype=torch.float32).cuda()
+    tensor = torch.tensor(observations, dtype=torch.float32)
+
+    if cuda_available:
+        tensor = tensor.cuda()
+
     policy, value = loaded.forward(tensor)
 
     return policy.cpu().detach().numpy(), value.cpu().detach().numpy()
@@ -141,7 +154,10 @@ def generate():
     mod = DRLModule()
     inputs = torch.tensor(np.zeros((1, param.WIDTH, param.HEIGHT, param.FEATURES), dtype=np.float32))
 
-    loaded = torch.jit.trace(mod, inputs).cuda()
+    loaded = torch.jit.trace(mod, inputs)
+
+    if cuda_available:
+        loaded = loaded.cuda()
 
 def train(trajectories):
     """Trains the loaded model on a collection of trajectories."""
@@ -158,10 +174,14 @@ def train(trajectories):
     optimizer = optim.SGD(loaded.parameters(), lr=param.TRAIN_LR, momentum=0.9)
 
     trajectories = [[
-        torch.tensor(obs, dtype=torch.float32).cuda(),
-        torch.tensor(mcts, dtype=torch.float32).cuda(),
-        torch.tensor(result, dtype=torch.float32).cuda()
+        torch.tensor(obs, dtype=torch.float32),
+        torch.tensor(mcts, dtype=torch.float32),
+        torch.tensor(result, dtype=torch.float32)
     ] for (obs, mcts, result) in trajectories]
+
+    if cuda_available:
+        for t in trajectories:
+            t.cuda()
 
     loader = data_utils.DataLoader(
         trajectories,
