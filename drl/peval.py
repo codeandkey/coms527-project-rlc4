@@ -51,7 +51,7 @@ def evaluate():
                 score += r
                 count += 1
 
-        return ((score / count) * 2) - 1
+        return score / count
     
     def complete_game(i):
         # Check terminal value
