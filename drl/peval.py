@@ -8,8 +8,11 @@ from . import util
 import random
 import numpy as np
 
+next_game_id = None
+
 def evaluate():
     """Performs a model evaluation, returns the final score."""
+    global next_game_id
 
     score = 0
     util.log('Starting evaluation over {} games'.format(param.EVAL_GAMES))
@@ -19,8 +22,8 @@ def evaluate():
     ids = list(range(param.EVAL_BATCH_SIZE))
     results = [None for i in range(param.EVAL_GAMES)]
 
-    next_game_id = param.EVAL_BATCH_SIZE
     next_batch = np.empty((param.EVAL_BATCH_SIZE, param.WIDTH, param.HEIGHT, param.FEATURES))
+    next_game_id = param.EVAL_BATCH_SIZE
 
     def advance_rng(ind):
         if games[ind].env.turn == mturn[ind]:
@@ -54,6 +57,8 @@ def evaluate():
         return score / count
     
     def complete_game(i):
+        global next_game_id
+
         # Check terminal value
         value = games[i].terminal()
 
@@ -61,7 +66,7 @@ def evaluate():
             raise RuntimeError('complete() called on incomplete game')
 
         # Store result from model pov
-        results[ids[i]] = value * mturn[i]
+        results[ids[i]] = ((value * mturn[i]) + 1) / 2
 
         # Reset environment
         games[i] = mcts.Tree()
