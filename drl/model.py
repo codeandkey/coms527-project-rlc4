@@ -35,13 +35,13 @@ class DRLConvolutional(nn.Module):
         return self.relu(self.bn1(self.conv1(x)))
 
 class DRLResidual(nn.Module):
-    def __init__(self, features = param.MODEL_FILTERS, filters = param.MODEL_FILTERS):
+    def __init__(self, filters = param.MODEL_FILTERS):
         super().__init__()
 
         self.bn1 = nn.BatchNorm2d(filters)
         self.bn2 = nn.BatchNorm2d(filters)
 
-        self.conv1 = nn.Conv2d(features, filters, (3, 3), padding=(1, 1), bias=False)
+        self.conv1 = nn.Conv2d(filters, filters, (3, 3), padding=(1, 1), bias=False)
         self.conv2 = nn.Conv2d(filters, filters, (3, 3), padding=(1, 1), bias=False)
 
         self.relu = nn.ReLU()
@@ -181,7 +181,8 @@ def train(trajectories):
 
     if cuda_available:
         for t in trajectories:
-            t.cuda()
+            for j in t:
+                j.cuda()
 
     loader = data_utils.DataLoader(
         trajectories,
@@ -196,11 +197,11 @@ def train(trajectories):
         for i, (obs, mcts, result) in enumerate(loader, 0):
             optimizer.zero_grad()
 
-            policy, value = loaded(obs)
+            policy, value = loaded(obs.cuda())
 
             value = torch.squeeze(value)
 
-            loss = lossfn(policy, value, mcts, result)
+            loss = lossfn(policy, value, mcts.cuda(), result.cuda())
             loss.backward()
 
             optimizer.step()

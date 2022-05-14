@@ -17,7 +17,7 @@ MODEL_PATH = 'model.pt'
 ENVS_PER_ACTOR = 32 # environments on each actor, also inference batchsize
 
 # Model architecture
-MODEL_RESIDUALS = 4 # residual layer count
+MODEL_RESIDUALS = 3 # residual layer count
 MODEL_FILTERS = 16  # filters per convolutional/half-residual layer
 
 # Message types
@@ -39,7 +39,7 @@ TRAIN_LR = 0.002      # learning rate (SGD)
 # MCTS parameters
 
 MCTS_CPUCT = 1               # c_puct parameter (see PUCT formula in alphazero)
-MCTS_NODES = 1024            # target root node count per move
+MCTS_NODES = 160             # target root node count per move
 MCTS_NOISE_ALPHA = 1 / PSIZE # Dirichlet noise alpha
 MCTS_NOISE_WEIGHT = 0.05     # noise weight per expansion
 

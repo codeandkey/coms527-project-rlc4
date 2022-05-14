@@ -6,6 +6,9 @@ import math
 import numpy as np
 import random
 
+import sys
+sys.setrecursionlimit(16384)
+
 class Node:
     def __init__(self):
         """Initializes a new Node with no turn. Turn must be assigned
@@ -141,19 +144,15 @@ class Tree:
 
         # Select best n
         best_n = 0
-        best_action = None
+        action = None
 
         for c in self.root.children:
-            if c.n >= best_n:
+            if c.n > best_n:
                 best_n = c.n
-                best_action = c.action
+                action = c.action
 
-        if best_action is None:
-            print(str(self.env))
-            raise RuntimeError('couldn\'t pick a node, {} {} {} {}'.format([c.n for c in self.root.children], self.env.terminal(), self.env.lmm(), self.root.n))
-
-        self.advance(best_action)
-        return best_action
+        self.advance(action)
+        return action
 
     def advance(self, action):
         """Advances the tree by a specific action, creating new nodes
@@ -189,12 +188,12 @@ class Tree:
         out = [0.0] * param.PSIZE
         tn = 0
 
-        for c in self.root.children:
-            tn += c.n
-
         if not self.root.children:
             print(str(self.env))
             raise RuntimeError('snapshot(): no root children')
+
+        for c in self.root.children:
+            tn += c.n
 
         for c in self.root.children:
             out[c.action] = c.n / tn

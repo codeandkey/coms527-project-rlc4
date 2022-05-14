@@ -27,14 +27,31 @@ def start():
 
             while nxt is None:
                 # Send incomplete trajectory to trainer
-                trajectory = (trees[i].env.observe(), trees[i].snapshot(), tags[i])
+                snapshot = trees[i].snapshot()
+                trajectory = (trees[i].env.observe(), snapshot, tags[i])
 
                 cluster.comm.send((cluster.rank, param.MSG_INCOMPLETE_TRAJECTORY), cluster.trainer)
                 cluster.comm.send(trajectory, cluster.trainer)
 
+                if cluster.rank == cluster.actors[0] and i == 0:
+                    print('====== making move ======')
+                    print('snapshot\n{}'.format(' '.join(map(lambda s: str(round(s * trees[i].root.n)), snapshot))))
+                    print('state\n{}'.format(trees[i].env),end=None)
+
+                    levels = ['']
+                    levels = [' ', '░ ', '▒', '▓', '█']
+
+                    def level(n):
+                        return min(int(n * len(levels)), len(levels) - 1)
+
+                    print(' ' + ''.join([levels[level(snapshot[i])] for i in range(7)]))
+                   
                 # Advance environment immediately
                 action = trees[i].pick()
 
+                if cluster.rank == cluster.actors[0] and i == 0:
+                    print('picking {}'.format(action))
+                
                 # Check for terminal state
                 tvalue = trees[i].terminal()
 
