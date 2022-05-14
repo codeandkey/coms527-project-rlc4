@@ -36,7 +36,7 @@ class Node:
             if c.n < 1:
                 return c
 
-            exploitation = -c.q() # negamax MCTS! awesome
+            exploitation = c.q()
             exploration = c.p * param.MCTS_CPUCT * math.sqrt(self.n) / (1 + c.n)
 
             uct = exploitation + exploration
