@@ -24,7 +24,7 @@ class Node:
         return self.w / self.n
 
     def select(self):
-        """Returns the best child node (maximized PUCT), or None if this node
+        """Returns the best child node (maximized PUCT or unvisited), or None if this node
            has no children."""
         if not self.children:
             return None
@@ -33,6 +33,9 @@ class Node:
         best_child = None
 
         for c in self.children:
+            if c.n < 1:
+                return c
+
             exploitation = -c.q() # negamax MCTS! awesome
             exploration = c.p * param.MCTS_CPUCT * math.sqrt(self.n) / (1 + c.n)
 
