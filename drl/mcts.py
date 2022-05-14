@@ -50,7 +50,7 @@ class Node:
     def backprop(self, value):
         """Backpropagates a value through the tree."""
         self.n += 1
-        self.w += value * self.turn
+        self.w += 0.5 + value * self.turn
 
         if self.parent:
             self.parent.backprop(value)
