@@ -127,7 +127,8 @@ class Tree:
         noise = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
 
         # normalize policy
-        policy /= np.sum(mask * policy)
+        policy *= mask
+        policy /= np.sum(policy)
 
         for i in range(len(mask)):
             if mask[i] > 0:
