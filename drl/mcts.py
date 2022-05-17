@@ -32,11 +32,11 @@ class Node:
         if not self.children:
             return None
 
-        best_uct = -10000000
+        best_uct = -100000
         best_child = None
 
         for c in self.children:
-            if c.n < 1:
+            if param.FORCE_SELECT_UNVISITED_CHILDREN and c.n < 1:
                 return c
 
             exploitation = c.q()
@@ -53,7 +53,10 @@ class Node:
     def backprop(self, value):
         """Backpropagates a value through the tree."""
         self.n += 1
-        self.w += 0.5 + value * self.turn
+        self.w += 0.5 + value * self.turn / 2
+
+        if type(value) != float:
+            raise Exception('value type ' + str(type(value)))
 
         if self.parent:
             self.parent.backprop(value)
@@ -67,7 +70,7 @@ class Tree:
     def clear_subtree(self):
         """Clears all nodes from the tree and assigns a fresh root."""
         self.root = Node()
-        self.root.turn = self.env.turn
+        self.root.turn = -self.env.turn
         self.target_node = None
 
     def select(self, root=None):
@@ -84,7 +87,7 @@ class Tree:
         tvalue = self.env.terminal()
 
         if tvalue is not None:
-            root.backprop(tvalue)
+            root.backprop(float(tvalue))
             self.target_node = root
             self._rewind()
             return self.select()
@@ -103,14 +106,19 @@ class Tree:
     def expand(self, policy, value):
         """Expands the tree at a waiting node. Must be called after select()
            has returned a non-None value."""
+
+        if self.target_node.turn != -self.env.turn:
+            raise Exception('turn mismatch')
+
+        if type(value) == np.ndarray:
+            if len(value) == 1:
+                value = float(value[0])
+            else:
+                raise Exception('bad array size')
+
         self.target_node.backprop(value)
-
         mask = self.env.lmm()
-
         self.target_node.children = []
-
-        if self.target_node.turn != self.env.turn:
-            raise RuntimeError('turn mismatch')
 
         # [ this encourages exploration INITIALLY, but eliminates noise when carrying over trees ]
         #noise = np.zeros((param.PSIZE,))
@@ -119,7 +127,7 @@ class Tree:
         noise = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
 
         # normalize policy
-        policy /= np.linalg.norm(mask * policy)
+        policy /= np.sum(mask * policy)
 
         for i in range(len(mask)):
             if mask[i] > 0:
@@ -134,9 +142,9 @@ class Tree:
 
         self._rewind()
 
-    def pick(self):
+    def pick(self, alpha=param.TRAIN_ALPHA_FINAL):
         """Picks the most promising next action from the tree and performs it."""
-        if self.root.turn != self.env.turn:
+        if self.root.turn != -self.env.turn:
             raise RuntimeError('turn mismatch')
 
         if self.root.n < param.MCTS_NODES:
@@ -146,10 +154,27 @@ class Tree:
         best_n = 0
         action = None
 
-        for c in self.root.children:
-            if c.n > best_n:
-                best_n = c.n
-                action = c.action
+        dist = None
+
+        if alpha > 0.1:
+            dist = np.array([(c.n / self.root.n) * (c.n ** (1 / alpha)) for c in self.root.children])
+            dist /= np.sum(dist)
+        else:
+            best_action = None
+            best_n = 0
+
+            for c in self.root.children:
+                if c.n > best_n:
+                    best_action = c.action
+                    best_n = c.n
+
+            dist = [1 if c.action == best_action else 0 for c in self.root.children]
+
+        if len(dist) != len(self.root.children):
+            print(dist, self.root.children)
+            raise Exception('bad p, rc size')
+
+        action = np.random.choice(self.root.children, p=dist).action
 
         self.advance(action)
         return action
@@ -162,7 +187,7 @@ class Tree:
         if self.root.children is None:
             self.root = Node()
             self.env.push(action)
-            self.root.turn = self.env.turn
+            self.root.turn = -self.env.turn
             return
 
         if self.target_node is not None:
@@ -197,6 +222,22 @@ class Tree:
 
         for c in self.root.children:
             out[c.action] = c.n / tn
+
+        return out
+
+    def values(self):
+        """Returns a vector of node value averages at the root level."""
+        if self.root.n < param.MCTS_NODES:
+            raise RuntimeError('values() called with root n {}'.format(self.root.n))
+
+        out = [0.0] * param.PSIZE
+
+        if not self.root.children:
+            print(str(self.env))
+            raise RuntimeError('values(): no root children')
+
+        for c in self.root.children:
+            out[c.action] = c.q()
 
         return out
 

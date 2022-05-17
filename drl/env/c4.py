@@ -41,7 +41,7 @@ class Connect4(Environment):
 
         out =  '+-------+\n'
         out += '|{}| {} to move\n'.format(rows[0], 'X' if self.turn > 0 else 'O')
-        out += '|{}| {}\n'.format(rows[1], ' '.join(map(str, reversed(self.actions))))
+        out += '|{}| {}\n'.format(rows[1], ' '.join(map(str, reversed(self.actions[-10:]))) + ' ...')
         out += '|' + '|\n|'.join(rows[2:]) + '|\n'
         out +=  '+-------+'
 

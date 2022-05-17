@@ -5,6 +5,7 @@ from . import mcts
 from . import param
 from . import util
 
+import math
 import numpy as np
 import random
 import uuid
@@ -33,24 +34,38 @@ def start():
                 cluster.comm.send((cluster.rank, param.MSG_INCOMPLETE_TRAJECTORY), cluster.trainer)
                 cluster.comm.send(trajectory, cluster.trainer)
 
+                # Determine current alpha
+                alpha = param.TRAIN_ALPHA_FINAL
+
+                if len(trees[i].env.actions) < param.TRAIN_ALPHA_CUTOFF:
+                    alpha = param.TRAIN_ALPHA_INIT * (param.TRAIN_ALPHA_DECAY ** len(trees[i].env.actions))
+
                 if cluster.rank == cluster.actors[0] and i == 0:
                     print('====== making move ======')
                     print('snapshot\n{}'.format(' '.join(map(lambda s: str(round(s * trees[i].root.n)), snapshot))))
+                    print('alpha\n{}'.format(alpha))
+                    print('values\n{}'.format(trees[i].values()))
                     print('state\n{}'.format(trees[i].env),end=None)
 
-                    levels = ['']
-                    levels = [' ', '░ ', '▒', '▓', '█']
+                    levels = [' ', '░', '▒', '▓', '▓', '▓', '▓', '▓', '█']
 
                     def level(n):
                         return min(int(n * len(levels)), len(levels) - 1)
 
-                    print(' ' + ''.join([levels[level(snapshot[i])] for i in range(7)]))
+                    policy = [0] * param.PSIZE
+
+                    for c in self.root.children:
+                        policy[c.action] = c.p
+
+                    print('|' + ''.join([levels[level(p)] for p in policy]) + '| NN policy')
+                    print('|' + ''.join([levels[level(snapshot[i])] for i in range(param.PSIZE)]) + '| MCTS dist')
                    
                 # Advance environment immediately
-                action = trees[i].pick()
+                action = trees[i].pick(alpha)
 
                 if cluster.rank == cluster.actors[0] and i == 0:
-                    print('picking {}'.format(action))
+                    print('|' + ' ' * action + '█' + ' ' * ((param.PSIZE - 1) - action) + '| selected')
+                    print('|-------|')
                 
                 # Check for terminal state
                 tvalue = trees[i].terminal()

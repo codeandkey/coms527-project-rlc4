@@ -8,29 +8,31 @@ from . import util
 import random
 import numpy as np
 
-next_game_id = None
+count = None
+score = None
 
 def evaluate():
     """Performs a model evaluation, returns the final score."""
-    global next_game_id
 
-    score = 0
+    global count
+    global score
+
     util.log('Starting evaluation over {} games'.format(param.EVAL_GAMES))
 
     games = [mcts.Tree() for i in range(param.EVAL_BATCH_SIZE)]
     mturn = [random.randint(0, 1) * 2 - 1 for i in range(param.EVAL_BATCH_SIZE)]
-    ids = list(range(param.EVAL_BATCH_SIZE))
-    results = [None for i in range(param.EVAL_GAMES)]
 
     next_batch = np.empty((param.EVAL_BATCH_SIZE, param.WIDTH, param.HEIGHT, param.FEATURES))
-    next_game_id = param.EVAL_BATCH_SIZE
+
+    count = 0
+    score = 0
 
     def advance_rng(ind):
         if games[ind].env.turn == mturn[ind]:
             raise RuntimeError('advance_rng() called on wrong turn')
 
         while games[ind].select() is not None:
-            policy = np.random.dirichlet([param.MCTS_NOISE_ALPHA] * param.PSIZE)
+            policy = np.random.dirichlet([1 / param.PSIZE] * param.PSIZE)
             value = np.random.randint(-100, 100) / 300
         
             games[ind].expand(policy, value)
@@ -45,19 +47,9 @@ def evaluate():
         #games[ind].advance(mv)
         games[ind].clear_subtree()
 
-    def performance():
-        score = 0
-        count = 0
-
-        for r in results:
-            if r is not None:
-                score += r
-                count += 1
-
-        return score / count
-    
     def complete_game(i):
-        global next_game_id
+        global count
+        global score
 
         # Check terminal value
         value = games[i].terminal()
@@ -66,20 +58,23 @@ def evaluate():
             raise RuntimeError('complete() called on incomplete game')
 
         # Store result from model pov
-        results[ids[i]] = ((value * mturn[i]) + 1) / 2
+        gscore = ((value * mturn[i]) + 1) / 2
+        score += gscore
+        count += 1
+
+        rword = 'LOSS' if gscore == 0 else 'WIN ' if gscore == 1 else 'DRAW'
+        player = 'X' if mturn[i] == 1 else 'O'
 
         # Reset environment
         games[i] = mcts.Tree()
         mturn[i] = random.randint(0, 1) * 2 - 1
-        ids[i] = next_game_id
-        next_game_id += 1
 
         if games[i].env.turn != mturn[i]:
             advance_rng(i)
 
-        util.log('Current performance {:.2f}'.format(performance()))
+        util.log('{} as {}, performance {:.2f} ({} / {})'.format(rword, player, score / count, score, count))
 
-    while None in results:
+    while count < param.EVAL_GAMES:
         # Build next batch.
         for i in range(len(games)):
             # If computer's turn, advance immediately
@@ -115,7 +110,5 @@ def evaluate():
         for i in range(len(games)):
             games[i].expand(policy[i], value[i]) 
 
-    score = performance()    
-
-    util.log('Finished evaluation, performance {}'.format(score))
-    return score
+    util.log('Finished evaluation, performance {}'.format(score / count))
+    return score / count
