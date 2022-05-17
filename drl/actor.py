@@ -54,7 +54,7 @@ def start():
 
                     policy = [0] * param.PSIZE
 
-                    for c in self.root.children:
+                    for c in trees[i].root.children:
                         policy[c.action] = c.p
 
                     print('|' + ''.join([levels[level(p)] for p in policy]) + '| NN policy')
